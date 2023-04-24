@@ -1,0 +1,586 @@
+---
+title: "Midterm Project for Four Year College Data"
+author: "Tobias Boggess, Carl Perry"
+date: "3/16/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r library, message=F, echo=FALSE, include=FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+```
+
+```{r generalSetup, echo=F}
+################################################################################
+#               General setup for choosing files and setup                     #  
+################################################################################
+
+# Finding the path for the file
+my.file <- file.choose()
+
+# Reading file into a data gram
+# File has a header
+fryr_collg_demogr <-
+  read.csv(my.file,
+           header = TRUE,
+           sep = ",",
+           stringsAsFactors = F)
+
+# Filters down the results by the year 2017
+fryr_collg_demo_2017 <- fryr_collg_demogr %>% filter(year == 2017)
+
+# Shortens the number of variables to columns starting with dif, col, mkt
+fryr_2017_short <-
+  fryr_collg_demo_2017 %>% select(fips_ipeds,
+                                  inst_name,
+                                  fourcat,
+                                  starts_with("dif_"),
+                                  starts_with("mkt_"),
+                                  starts_with("col_")
+                                 )
+
+# Lengthens the columns starting with dif to use in plots
+fryr_2017_short_dif <-
+  fryr_2017_short %>% pivot_longer(cols = dif_white:dif_twora,
+                                   names_to = "dif_pct_race",
+                                   values_to = "dif_in_pct") 
+```
+
+|  The task of data wrangling for the project was primarily defined by the verbs of dplyr. The first step in the project was using filter to subset the data to only include the academic year 2017, as the data set contained several years. After the initial filter subset, select was used to subset the data to include a select range of columns. For our project, we decided to include the columns fips_ipeds, inst_name, fourcat and all columns associated with difference, market, and college for their numeric values for computation. Mutate was used to add a categorical value to the long pivoted version of data to allow for grouping and faceting in graphs. Summarize was used to generate tables based on the subsets of data.
+  
+```{r resQ1, results='asis',fig.dim=c(8,11), echo=F}
+################################################################################
+#               Plots and Tables for Research Question 1                       #  
+################################################################################
+
+# Groups college demographics by state
+fryr_collg_demo_2017 <- fryr_collg_demo_2017 %>% group_by(fips_ipeds)
+
+# Filters out Private More Selective for more accurate min/max in col columns
+#fryr_collg_demo_2017 <- fryr_collg_demo_2017 # %>% 
+#  filter(fourcat != "Private More Selective")
+
+# Setting up data for all ggplots
+fryr_plot <- ggplot(data = fryr_2017_short_dif)
+
+# Plot for research question 1
+# Displays a graph of ethnicity on the x axis and the percent difference
+# between College demographic percentages and Market demographic percentages
+# separated by state
+fryr_plot + geom_point(
+  aes(x = dif_pct_race, y = dif_in_pct, color = fourcat, shape="."),
+  alpha = 0.3,
+  position = 'jitter') + 
+  facet_wrap(~ fips_ipeds, ncol = 5) + xlab("Ethnicity") + 
+  ylab("Difference Between College and Market Percent Demographics") +
+  ggtitle(label = "Percent Difference b/w College and Market Vs Ethnicity") +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    vjust = 1,
+    hjust = -0.1
+  ))
+
+# Table for research question 1
+# Summary of statistics for each state
+# This will have the min, max, median, mean, and standard deviation of different 
+# ethnicities. Excludes Private More Selective as this will impact the data
+sum_fryr_cllg_2017_mean <- fryr_collg_demo_2017 %>% summarise(
+  mean(dif_white),
+  mean(dif_hispa),
+  mean(dif_black),
+  mean(dif_asian),
+  mean(dif_amind),
+  mean(dif_pacis),
+  mean(dif_twora),
+)
+
+sum_fryr_cllg_2017_sd <- fryr_collg_demo_2017 %>% summarise(
+  sd(dif_white),
+  sd(dif_hispa),
+  sd(dif_black),
+  sd(dif_asian),
+  sd(dif_amind),
+  sd(dif_pacis),
+  sd(dif_twora)
+)
+  knitr::kable(sum_fryr_cllg_2017_mean, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+  knitr::kable(sum_fryr_cllg_2017_sd, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest1.txt",
+#   sep = ",",
+#   quote = F,
+#   row.names = T
+# )
+```
+
+   To answer the question of the degree of difference between college racial and ethnic compositions and the compositions of the corresponding geographic markets we decided that the information should be broken down by several variables. The largest factor in relation to geographical markets was the racial breakdown by state (fips_ipeds), as there was quite a lot of variation in population demographics. We then used the variables of ethnicity and college type (fourcat) to further define the data.
+
+```{r resQ2,results='asis',fig.dim=c(8,11) ,echo=F}
+################################################################################
+#                 Plots and Tables for Research Question 2                     #
+################################################################################
+
+# Plot for research question 2
+# x-axis: ethnicity
+# y-axis: Difference in percents b/w College demographics and Market demographics
+# graph isn't separated by states
+# will show the different types of schools by color
+fryr_plot + geom_point(mapping = aes(x = dif_pct_race, 
+                                     y = dif_in_pct, 
+                                     color = fourcat),
+                       alpha = 0.5, position = 'jitter') +
+  xlab("Ethnicity") + 
+  ylab("Percent Difference b/w Market and College Demographics") +
+  ggtitle(label = "College-Market Difference of Percent Versus Ethnicity") +
+  theme(axis.text.x = element_text(angle = 90), aspect.ratio = 0.8)
+
+# Table to put differences between college, market, and difference of the two
+coll4_long<-fryr_2017_short%>%
+  pivot_longer(cols = dif_white:col_twora)%>%
+  mutate(rID = case_when(name=="col_white"|name=="mkt_white"|name=="dif_white"~ 1,
+                         name=="col_black"|name=="mkt_black"|name=="dif_black"~ 2,
+                         name=="col_hispa"|name=="mkt_hispa"|name=="dif_hispa"~ 3,
+                         name=="col_asian"|name=="mkt_asian"|name=="dif_asian"~ 4,
+                         name=="col_amind"|name=="mkt_amind"|name=="dif_amind"~ 5,
+                         name=="col_pacis"|name=="mkt_pacis"|name=="dif_pacis"~ 6,
+                         name=="col_twora"|name=="mkt_twora"|name=="dif_twora"~ 7)) %>% 
+  group_by(rID)
+
+# Plot for both research question 1 and research question 2
+# x-axis: ethnicity type
+# y-axis: percentages of races
+# separated by type of school
+ggplot(data = coll4_long, mapping=aes(x=reorder(name,rID),y=value,))+
+  geom_point(mapping=aes(color=fourcat),alpha=.3,position = "jitter")+
+  geom_boxplot(outlier.shape = NA,fill=NA)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 0)) +
+  facet_wrap(~rID,scales = "free") +
+  xlab("College, Market, and Difference by Ethnicity Types") + 
+  ylab("Percent") + ggtitle(label = "Percentages by Ethnicity (Separated)")
+
+# Summary table to show min/max of each race
+sum_fryr_2017_by_race_first <- fryr_collg_demo_2017 %>% ungroup() %>% 
+  summarise(
+            min(dif_white),
+            max(dif_white),
+            min(dif_hispa),
+            max(dif_hispa),
+            min(dif_black),
+            max(dif_black),
+            min(dif_asian),
+            max(dif_asian)
+            )
+sum_fryr_2017_by_race_last <- fryr_collg_demo_2017 %>% ungroup() %>%
+  summarise(
+            min(dif_amind),
+            max(dif_amind),
+            min(dif_pacis),
+            max(dif_pacis),
+            min(dif_twora),
+            max(dif_twora)
+            )
+
+knitr::kable(sum_fryr_2017_by_race_first, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+
+knitr::kable(sum_fryr_2017_by_race_last, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest2.txt",
+#   sep = ",",
+#   quote = F, 
+#   row.names = T
+
+```
+
+  In order to determine which racial or ethnic groups had the largest discrepancies between representation in colleges and the markets we organized the data into two separate graphical representations. The first being a simple comparison of differences between racial or ethnic groups, the second being separate graphs per each racial or ethnic group comparing the college representation, market representation, and the difference. This allowed for a general overview as well as some more specific data per demographic.
+
+```{r resQ3, results='asis',fig.dim=c(8,11), echo=FALSE}
+################################################################################
+#                 Plots and Tables for Research Question 3                     #
+################################################################################
+
+# Setup data frame for graph
+fryr_2017_short_dif <- fryr_2017_short_dif %>% group_by(fourcat)
+
+# Setup data frame for table
+fryr_2017_type_cllg <- fryr_2017_short %>% group_by(fourcat)
+
+# Plotting of percent difference versus type of school
+fryr_plot + geom_point(mapping = aes(x = fourcat, 
+                                     y = dif_in_pct, 
+                                     color = dif_pct_race),
+                       position = 'jitter',
+                       alpha = 0.3) +
+  ggtitle(label = "Percentage by Institution Type") +
+  xlab("Ethnicity") + ylab("Percentage") +
+  geom_boxplot(mapping=aes(x = fourcat, 
+                           y = dif_in_pct ),
+                           outlier.shape = NA,
+               fill=NA, alpha = 0.8) +
+  theme(axis.text.x = element_text(angle = 90), aspect.ratio = 0.8)
+
+# Table to summarize data based on type of college including min, max, median
+# mean, and standard deviation of each race
+sum_type_cllg_white <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_white),
+            maxDif=max(dif_white),
+            medDif=median(dif_white),
+            meanDif=mean(dif_white),
+            sdDif=sd(dif_white))
+
+sum_type_cllg_hispa <- fryr_2017_type_cllg %>% 
+    summarise(minDif=min(dif_hispa),
+            maxDif=max(dif_hispa),
+            medDif=median(dif_hispa),
+            meanDif=mean(dif_hispa),
+            sdDif=sd(dif_hispa))
+
+sum_type_cllg_black <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_black),
+            maxDif=max(dif_black),
+            medDif=median(dif_black),
+            meanDif=mean(dif_black),
+            sdDif=sd(dif_black))
+
+sum_type_cllg_asian <- fryr_2017_type_cllg %>% 
+  summarise(minDif=min(dif_asian),
+            maxDif=max(dif_asian),
+            medDif=median(dif_asian),
+            meanDif=mean(dif_asian),
+            sdDif=sd(dif_asian))
+
+sum_type_cllg_amind <- fryr_2017_type_cllg %>% 
+   summarise(minDif=min(dif_amind),
+            maxDif=max(dif_amind),
+            medDif=median(dif_amind),
+            meanDif=mean(dif_amind),
+            sdDif=sd(dif_amind))
+
+sum_type_cllg_pacis <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_pacis),
+            maxDif=max(dif_pacis),
+            medDif=median(dif_pacis),
+            meanDif=mean(dif_pacis),
+            sdDif=sd(dif_pacis))
+
+sum_type_cllg_twora <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_twora),
+            maxDif=max(dif_twora),
+            medDif=median(dif_twora),
+            meanDif=mean(dif_twora),
+            sdDif=sd(dif_twora))
+knitr::kable(sum_type_cllg_white,caption = "White diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_hispa,caption = "Hispanic diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_black,caption = "Black diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_asian,caption = "Asian diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_amind,caption = "American Indian diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_pacis,caption = "Pacific Islander diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_twora,caption = "Multiracial diffrence summary",format = "latex",digits = 3)
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest3.txt",
+#   sep = ",",
+#   quote = F, 
+#   row.names = T
+
+```
+
+   To examine discrepancies in colleges by institution level, degree of selectivity, and/or public/private/for profit status, while still making the data regarding individual racial or ethnic groups visible, we decided to make each data point color coded by ethnicity. This allowed us to examine not only the amount of discrepancy but also trends involving racial and ethnic groups.
+
+# Conclusions
+|   Q1. Many mean and median values lie near zero, but there is significant deviation present. For approximately 50% of the states the difference in the market vs college attendance is primarily within 25% of zero difference. There appears to be a correlation between population density and greater deviation.
+
+|   Q2. There are three groups where the discrepancies can be considered large, each with slight differences in distribution. The first group is the White students. This category probably has the largest amount of discrepancy without a skew and no particular trend to the variation. The other two groups with large discrepancies are Black and Hispanic students. For the most part, they have similar negative skews and ranges but there are a significantly larger amount of positive outliers among Black students.
+
+|   Q3. Overall it seems that public colleges tend to have narrower ranges of discrepancy than private and for profit colleges. When looking at outliers there is a trend across all but one type of college where there tend to be more density of positive outliers for White and Asian students and more density of negative outliers for Black and Hispanic students.The exception in this trend is the for profit schools where the outliers for White and Black students are reversed. The Private, more selective schools have the largest range of discrepancies excluding outliers.
+
+\newpage
+```{r echo=TRUE, eval=FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+################################################################################
+#               General setup for choosing files and setup                     #  
+################################################################################
+
+# Finding the path for the file
+my.file <- file.choose()
+
+# Reading file into a data gram
+# File has a header
+fryr_collg_demogr <-
+  read.csv(my.file,
+           header = TRUE,
+           sep = ",",
+           stringsAsFactors = F)
+
+# Filters down the results by the year 2017
+fryr_collg_demo_2017 <- fryr_collg_demogr %>% filter(year == 2017)
+
+# Shortens the number of variables to columns starting with dif, col, mkt
+fryr_2017_short <-
+  fryr_collg_demo_2017 %>% select(fips_ipeds,
+                                  inst_name,
+                                  fourcat,
+                                  starts_with("dif_"),
+                                  starts_with("mkt_"),
+                                  starts_with("col_")
+                                 )
+
+# Lengthens the columns starting with dif to use in plots
+fryr_2017_short_dif <-
+  fryr_2017_short %>% pivot_longer(cols = dif_white:dif_twora,
+                                   names_to = "dif_pct_race",
+                                   values_to = "dif_in_pct") 
+
+################################################################################
+#               Plots and Tables for Research Question 1                       #  
+################################################################################
+
+# Groups college demographics by state
+fryr_collg_demo_2017 <- fryr_collg_demo_2017 %>% group_by(fips_ipeds)
+
+# Filters out Private More Selective for more accurate min/max in col columns
+#fryr_collg_demo_2017 <- fryr_collg_demo_2017 # %>% 
+#  filter(fourcat != "Private More Selective")
+
+# Setting up data for all ggplots
+fryr_plot <- ggplot(data = fryr_2017_short_dif)
+
+# Plot for research question 1
+# Displays a graph of ethnicity on the x axis and the percent difference
+# between College demographic percentages and Market demographic percentages
+# separated by state
+fryr_plot + geom_point(
+  aes(x = dif_pct_race, y = dif_in_pct, color = fourcat, shape="."),
+  alpha = 0.3,
+  position = 'jitter') + 
+  facet_wrap(~ fips_ipeds, ncol = 5) + xlab("Ethnicity") + 
+  ylab("Difference Between College and Market Percent Demographics") +
+  ggtitle(label = "Percent Difference b/w College and Market Vs Ethnicity") +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    vjust = 1,
+    hjust = -0.1
+  ))
+
+# Table for research question 1
+# Summary of statistics for each state
+# This will have the min, max, median, mean, and standard deviation of different 
+# ethnicities. Excludes Private More Selective as this will impact the data
+sum_fryr_cllg_2017_mean <- fryr_collg_demo_2017 %>% summarise(
+  mean(dif_white),
+  mean(dif_hispa),
+  mean(dif_black),
+  mean(dif_asian),
+  mean(dif_amind),
+  mean(dif_pacis),
+  mean(dif_twora),
+)
+
+sum_fryr_cllg_2017_sd <- fryr_collg_demo_2017 %>% summarise(
+  sd(dif_white),
+  sd(dif_hispa),
+  sd(dif_black),
+  sd(dif_asian),
+  sd(dif_amind),
+  sd(dif_pacis),
+  sd(dif_twora)
+)
+  knitr::kable(sum_fryr_cllg_2017_mean, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+  knitr::kable(sum_fryr_cllg_2017_sd, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest1.txt",
+#   sep = ",",
+#   quote = F,
+#   row.names = T
+# )
+  
+  ################################################################################
+#                 Plots and Tables for Research Question 2                     #
+################################################################################
+
+# Plot for research question 2
+# x-axis: ethnicity
+# y-axis: Difference in percents b/w College demographics and Market demographics
+# graph isn't separated by states
+# will show the different types of schools by color
+fryr_plot + geom_point(mapping = aes(x = dif_pct_race, 
+                                     y = dif_in_pct, 
+                                     color = fourcat),
+                       alpha = 0.5, position = 'jitter') +
+  xlab("Ethnicity") + 
+  ylab("Percent Difference b/w Market and College Demographics") +
+  ggtitle(label = "College-Market Difference of Percent Versus Ethnicity") +
+  theme(axis.text.x = element_text(angle = 90), aspect.ratio = 0.8)
+
+# Table to put differences between college, market, and difference of the two
+coll4_long<-fryr_2017_short%>%
+  pivot_longer(cols = dif_white:col_twora)%>%
+  mutate(rID = case_when(name=="col_white"|name=="mkt_white"|name=="dif_white"~ 1,
+                         name=="col_black"|name=="mkt_black"|name=="dif_black"~ 2,
+                         name=="col_hispa"|name=="mkt_hispa"|name=="dif_hispa"~ 3,
+                         name=="col_asian"|name=="mkt_asian"|name=="dif_asian"~ 4,
+                         name=="col_amind"|name=="mkt_amind"|name=="dif_amind"~ 5,
+                         name=="col_pacis"|name=="mkt_pacis"|name=="dif_pacis"~ 6,
+                         name=="col_twora"|name=="mkt_twora"|name=="dif_twora"~ 7)) %>% 
+  group_by(rID)
+
+# Plot for both research question 1 and research question 2
+# x-axis: ethnicity type
+# y-axis: percentages of races
+# separated by type of school
+ggplot(data = coll4_long, mapping=aes(x=reorder(name,rID),y=value,))+
+  geom_point(mapping=aes(color=fourcat),alpha=.3,position = "jitter")+
+  geom_boxplot(outlier.shape = NA,fill=NA)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust = 0)) +
+  facet_wrap(~rID,scales = "free") +
+  xlab("College, Market, and Difference by Ethnicity Types") + 
+  ylab("Percent") + ggtitle(label = "Percentages by Ethnicity (Separated)")
+
+# Summary table to show min/max of each race
+sum_fryr_2017_by_race_first <- fryr_collg_demo_2017 %>% ungroup() %>% 
+  summarise(
+            min(dif_white),
+            max(dif_white),
+            min(dif_hispa),
+            max(dif_hispa),
+            min(dif_black),
+            max(dif_black),
+            min(dif_asian),
+            max(dif_asian)
+            )
+sum_fryr_2017_by_race_last <- fryr_collg_demo_2017 %>% ungroup() %>%
+  summarise(
+            min(dif_amind),
+            max(dif_amind),
+            min(dif_pacis),
+            max(dif_pacis),
+            min(dif_twora),
+            max(dif_twora)
+            )
+
+knitr::kable(sum_fryr_2017_by_race_first, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+
+knitr::kable(sum_fryr_2017_by_race_last, format = "latex", digits = 3) %>%
+    kable_styling(latex_options = "scale_down")
+
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest2.txt",
+#   sep = ",",
+#   quote = F, 
+#   row.names = T
+
+################################################################################
+#                 Plots and Tables for Research Question 3                     #
+################################################################################
+
+# Setup data frame for graph
+fryr_2017_short_dif <- fryr_2017_short_dif %>% group_by(fourcat)
+
+# Setup data frame for table
+fryr_2017_type_cllg <- fryr_2017_short %>% group_by(fourcat)
+
+# Plotting of percent difference versus type of school
+fryr_plot + geom_point(mapping = aes(x = fourcat, 
+                                     y = dif_in_pct, 
+                                     color = dif_pct_race),
+                       position = 'jitter',
+                       alpha = 0.3) +
+  ggtitle(label = "Percentage by Institution Type") +
+  xlab("Ethnicity") + ylab("Percentage") +
+  geom_boxplot(mapping=aes(x = fourcat, 
+                           y = dif_in_pct ),
+                           outlier.shape = NA,
+               fill=NA, alpha = 0.8) +
+  theme(axis.text.x = element_text(angle = 90), aspect.ratio = 0.8)
+
+# Table to summarize data based on type of college including min, max, median
+# mean, and standard deviation of each race
+sum_type_cllg_white <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_white),
+            maxDif=max(dif_white),
+            medDif=median(dif_white),
+            meanDif=mean(dif_white),
+            sdDif=sd(dif_white))
+
+sum_type_cllg_hispa <- fryr_2017_type_cllg %>% 
+    summarise(minDif=min(dif_hispa),
+            maxDif=max(dif_hispa),
+            medDif=median(dif_hispa),
+            meanDif=mean(dif_hispa),
+            sdDif=sd(dif_hispa))
+
+sum_type_cllg_black <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_black),
+            maxDif=max(dif_black),
+            medDif=median(dif_black),
+            meanDif=mean(dif_black),
+            sdDif=sd(dif_black))
+
+sum_type_cllg_asian <- fryr_2017_type_cllg %>% 
+  summarise(minDif=min(dif_asian),
+            maxDif=max(dif_asian),
+            medDif=median(dif_asian),
+            meanDif=mean(dif_asian),
+            sdDif=sd(dif_asian))
+
+sum_type_cllg_amind <- fryr_2017_type_cllg %>% 
+   summarise(minDif=min(dif_amind),
+            maxDif=max(dif_amind),
+            medDif=median(dif_amind),
+            meanDif=mean(dif_amind),
+            sdDif=sd(dif_amind))
+
+sum_type_cllg_pacis <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_pacis),
+            maxDif=max(dif_pacis),
+            medDif=median(dif_pacis),
+            meanDif=mean(dif_pacis),
+            sdDif=sd(dif_pacis))
+
+sum_type_cllg_twora <- fryr_2017_type_cllg %>% 
+     summarise(minDif=min(dif_twora),
+            maxDif=max(dif_twora),
+            medDif=median(dif_twora),
+            meanDif=mean(dif_twora),
+            sdDif=sd(dif_twora))
+knitr::kable(sum_type_cllg_white,caption = "White diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_hispa,caption = "Hispanic diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_black,caption = "Black diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_asian,caption = "Asian diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_amind,caption = "American Indian diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_pacis,caption = "Pacific Islander diffrence summary",format = "latex",digits = 3)
+knitr::kable(sum_type_cllg_twora,caption = "Multiracial diffrence summary",format = "latex",digits = 3)
+# Writes the summary table above to a .txt file
+# write.table(
+#   sum_fryr_cllg_2017,
+#   file = "E:/MTH 3270 Data Science/Midterm Project/resQuest3.txt",
+#   sep = ",",
+#   quote = F, 
+#   row.names = T
+
+```

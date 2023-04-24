@@ -1,0 +1,580 @@
+# Name: Tobias Boggess, Carl Perry
+# Date: April 5, 2022
+# Description: Three tasks, the first one is to carry out a multiple regression
+# analysis with a minimum of three explanatory variables. The second task is to
+# carry out a logistic regression analysis with two or more explanatory
+# variables. The third task is to carry a machine learning classification procedure
+# to predict the fourcat.
+
+
+################################################################################
+#                               Loading Libraries                              #
+################################################################################
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rattle)
+library(mclust)
+library(yardstick)
+library(rpart)
+library(randomForest)
+library(kknn)
+
+# Loading data into r from csv worksheet
+my.file <- file.choose()
+fryr.cllg <-
+  read.csv(my.file,
+           header = TRUE,
+           sep = ",",
+           stringsAsFactors = FALSE)
+fryr.cllg.17 <- filter(.data = fryr.cllg, year == 2017)
+
+################################################################################
+#                                   Task One                                   #
+################################################################################
+
+
+# Uses mkt explanatory variables in this multiple regression analysis
+# Try to predict white ethnicity percent in college demographics
+# fryr.cllg.colwht.reg <-
+#   lm(
+#     col_white ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colwht.reg)
+# 
+# 
+# # Best variables to predict white ethnicity percent for college demographics
+# fryr.cllg.colwht.regshort <-
+#   lm(col_white ~ mkt_white + mkt_hispa + mkt_black + mkt_twora,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colwht.regshort)
+# 
+# 
+# # Try to predict hispanic ethnicity percent in college demographics
+# fryr.cllg.colhsp.reg <-
+#   lm(
+#     col_hispa ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colhsp.reg)
+# 
+# 
+# # Best variables to predict hispanic ethnicity percent for college demographics
+# fryr.cllg.colhsp.regshort <-
+#   lm(col_hispa ~ mkt_white + mkt_hispa + mkt_black,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colhsp.regshort)
+# 
+# 
+# # Try to predict black ethnicity percent in college demographics
+# fryr.cllg.colblk.reg <-
+#   lm(
+#     col_black ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colblk.reg)
+# 
+# 
+# # Best variables to predict black ethnicity percent for college demographics
+# fryr.cllg.colblk.regshort <-
+#   lm(col_black ~ mkt_asian + mkt_black + mkt_twora,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colblk.regshort)
+# 
+# 
+# # Try to predict asian ethnicity percent in college demographics
+# fryr.cllg.colasn.reg <-
+#   lm(
+#     col_asian ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colasn.reg)
+# 
+# 
+# # Best variables to predict asian ethnicity percent for college demographics
+# fryr.cllg.colasn.regshort <-
+#   lm(col_asian ~ mkt_white + mkt_black + mkt_asian,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colasn.regshort)
+# 
+# 
+# # Try to predict American Indian ethnicity percent in college demographics
+# fryr.cllg.colamd.reg <-
+#   lm(
+#     col_amind ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colamd.reg)
+# 
+# 
+# # Best variables to predict American Indian ethnicity percent for college demographics
+# fryr.cllg.colamd.regshort <-
+#   lm(col_amind ~ mkt_amind + mkt_pacis + mkt_twora,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colamd.regshort)
+# 
+# 
+# # Try to predict Pacific Island ethnicity percent in college demographics
+# fryr.cllg.colpcs.reg <-
+#   lm(
+#     col_pacis ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.colpcs.reg)
+# 
+# 
+# # Best variables to predict Pacific Island ethnicity percent for college demographics
+# fryr.cllg.colpcs.regshort <-
+#   lm(col_pacis ~ mkt_asian + mkt_pacis + mkt_twora,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.colwht.regshort)
+# 
+# 
+# # Try to predict multiracial ethnicity percent in college demographics
+# fryr.cllg.coltwa.reg <-
+#   lm(
+#     col_twora ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+#       mkt_amind + mkt_pacis + mkt_twora,
+#     data = fryr.cllg.17
+#   )
+# 
+# summary(fryr.cllg.coltwa.reg)
+# 
+# 
+# # Best variables to predict multiracial ethnicity percent for college demographics
+# fryr.cllg.coltwa.regshort <-
+#   lm(col_twora ~ mkt_white + mkt_amind + mkt_twora,
+#      data = fryr.cllg.17)
+# 
+# summary(fryr.cllg.coltwa.regshort)
+
+
+# Predict col_white based on other col_* variables 
+fryr.cllg.colwht.reg1 <-
+  lm(
+    col_white ~  col_hispa + col_black + col_asian +
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17
+  )
+
+# Summary of multiregression model using college variables
+summary(fryr.cllg.colwht.reg1)
+
+# Plots the residuals using the built in function
+plot(fryr.cllg.colwht.reg)
+
+
+# Predict mkt_white based on other mkt_* variables
+fryr.cllg.mktwht.reg1 <-
+  lm(
+    mkt_white ~ + mkt_hispa + mkt_black + mkt_asian +
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17
+  )
+
+# Summary of multiregression model using market variables
+summary(fryr.cllg.mktwht.reg1)
+
+# Plots the residuals using built in R
+plot(fryr.cllg.mktwht.reg1)
+
+
+################################################################################
+#                                   Task Two                                   #
+################################################################################
+
+
+# Public variable predictions
+# College percent
+fryr.cllg.logreg <-
+  glm(
+    public ~ col_white + col_hispa + col_black + col_asian +
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the college percent variables
+summary(fryr.cllg.logreg)
+
+# Market percent
+fryr.cllg.mktlogreg <-
+  glm(
+    public ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the market percent variables
+summary(fryr.cllg.mktlogreg)
+
+
+# Private variable predictions
+# College percent
+fryr.cllg.privlogreg <-
+  glm(
+    private ~ col_white + col_hispa + col_black + col_asian +
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the college percent variables
+summary(fryr.cllg.privlogreg)
+
+# Market percent
+fryr.cllg.privmktlogreg <-
+  glm(
+    private ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the market percent variables
+summary(fryr.cllg.privmktlogreg)
+
+
+# For profit variable predictions
+# College percent
+fryr.cllg.proflogreg <-
+  glm(
+    forprofit ~ col_white + col_hispa + col_black + col_asian +
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the college percent variables
+summary(fryr.cllg.proflogreg)
+
+# Market percent
+fryr.cllg.profmktlogreg <-
+  glm(
+    forprofit ~ mkt_white + mkt_hispa + mkt_black + mkt_asian +
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17,
+    family = "binomial"
+  )
+
+# Summary of the logistic regression model using the market percent variables
+summary(fryr.cllg.profmktlogreg)
+
+
+
+################################################################################
+#                                   Task Three                                 #
+################################################################################
+
+
+################################  Decision Trees  ##############################
+
+# First using college percent ethnicities and total enrollment to predict 
+# the fourcat variable
+fryr.cllg.tree.1 <-
+  rpart(
+    fourcat ~ total_enrollment + col_white + col_hispa + col_black + col_asian + 
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17,
+    control = rpart.control(cp = 0.05)
+  )
+
+# Used to plot the decision tree of college explanatory variables
+par(xpd = TRUE)
+
+plot(fryr.cllg.tree.1, compress = TRUE)
+text(fryr.cllg.tree.1, use.n = TRUE)
+par(xpd = FALSE)
+
+# Summary of decision tree to predict the fourcat variable based on total 
+# enrollment and col_* explanatory variables. 
+summary(fryr.cllg.tree.1)
+
+# Used for getting the predictions based on the above model
+preds <- predict(fryr.cllg.tree.1, type = "class")
+
+# Used to compare the truth (fourcat) with the prediction (predType)
+fryr.cllg.17one <- mutate(fryr.cllg.17, predType = preds)
+
+# Actually gets the accuracy of the predictions from the model above
+accuracy(
+  data = fryr.cllg.17one,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Shows the predictions in a table with the true values
+conf_mat(data = fryr.cllg.17one, truth = fourcat, estimate = predType)
+
+
+# Second using market percent ethnicities and total enrollment to predict the 
+# type of school (fourcat)
+fryr.cllg.tree.2 <-
+  rpart(
+    fourcat ~ total_enrollment + mkt_white + mkt_hispa + mkt_black + mkt_asian + 
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17,
+    control = rpart.control(cp = 0.05)
+  )
+
+# Generates plot of the decision tree for the market explanatory variables
+par(xpd = TRUE)
+
+plot(fryr.cllg.tree.2, compress = TRUE)
+text(fryr.cllg.tree.2, use.n = TRUE)
+par(xpd = FALSE)
+
+# Provides the summary of the model above. Will provide how accurate the model is.
+summary(fryr.cllg.tree.2)
+
+# Used to find the predictions to add to the data frame 
+preds2 <- predict(fryr.cllg.tree.2, type = "class")
+
+# Adds the predictions to the data frame
+fryr.cllg.17two <- mutate(fryr.cllg.17, predType = preds2)
+
+# Illustrates accuracy of the model above
+accuracy(
+  data = fryr.cllg.17two,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Shows results of the predictions in a table format with the true values
+conf_mat(data = fryr.cllg.17two, truth = fourcat, estimate = predType)
+
+
+# Third using difference between college and market percent ethnicities with
+# total enrollment to predict fourcat
+fryr.cllg.tree.3 <-
+  rpart(
+    fourcat ~ total_enrollment + dif_white + dif_hispa + dif_black + dif_asian + 
+      dif_amind + dif_pacis + dif_twora,
+    data = fryr.cllg.17,
+    control = rpart.control(cp = 0.05)
+  )
+
+# Graphs the decision tree for the above model
+par(xpd = TRUE)
+
+plot(fryr.cllg.tree.3, compress = TRUE)
+text(fryr.cllg.tree.3, use.n = TRUE)
+par(xpd = FALSE)
+
+# Provides a summary of the model above
+summary(fryr.cllg.tree.3)
+
+# Predictions to add to data frame
+preds <- predict(fryr.cllg.tree.3, type = "class")
+
+# Adds prediction to the data frame
+fryr.cllg.17thr <- mutate(fryr.cllg.17, predType = preds)
+
+# Shows the accuracy of the predictions compared to the true data
+accuracy(
+  data = fryr.cllg.17thr,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Shows predictions and true values in a table
+conf_mat(data = fryr.cllg.17thr, truth = fourcat, estimate = predType)
+
+# Using shown variables from each decision tree with the best Pr values
+fryr.cllg.tree.4 <-
+  rpart(
+    fourcat ~ total_enrollment + dif_pacis + mkt_pacis,
+    data = fryr.cllg.17,
+    control = rpart.control(cp = 0.05)
+  )
+
+# Plotting of the decision tree above
+par(xpd = TRUE)
+
+plot(fryr.cllg.tree.4, compress = TRUE)
+text(fryr.cllg.tree.4, use.n = TRUE)
+par(xpd = FALSE)
+
+# Summarizes the decision tree, will obtain the equation of given tree
+summary(fryr.cllg.tree.4)
+
+# To be used to add predictions to data frame
+preds <- predict(fryr.cllg.tree.4, type = "class")
+
+# adds predictions to data frame
+fryr.cllg.17for <- mutate(fryr.cllg.17, predType = preds)
+
+# Shows the accuracy of the predictions to the true values
+accuracy(
+  data = fryr.cllg.17for,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Displays predictions and true values in a table
+conf_mat(data = fryr.cllg.17for, truth = fourcat, estimate = predType)
+
+
+
+###############################  Random Forest  ################################
+
+# All possible variables to predict fourcat with using a max of three of the 
+# explanatory variables in each tree
+fryr.cllg.forest <-
+  randomForest(
+    as.factor(fourcat) ~ total_enrollment + col_white + col_hispa + col_black + 
+      col_asian + col_amind + col_pacis + col_twora + mkt_white + mkt_hispa + 
+      mkt_black + mkt_asian + mkt_amind + mkt_pacis + mkt_twora + dif_white + 
+      dif_hispa + dif_black + dif_asian + dif_amind + dif_pacis + dif_twora,
+    data = fryr.cllg.17,
+    ntree = 5000,
+    mtry = 3
+  )
+
+# to add predictions to data frame
+forest.preds <- predict(fryr.cllg.forest, type = "class")
+
+# adds predictions to data frame
+fryr.cllg.17fiv <- mutate(fryr.cllg.17, predType = forest.preds)
+
+# Gives the accuracy of the predictions
+accuracy(
+  data = fryr.cllg.17fiv,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Shows the predictions and true values in table
+conf_mat(data = fryr.cllg.17fiv, truth = fourcat, estimate = predType)
+
+importance(fryr.cllg.forest)
+
+
+# Most important variables based on above random forest models
+fryr.cllg.forest1 <-
+  randomForest(
+    as.factor(fourcat) ~ total_enrollment + mkt_asian + mkt_amind,
+    data = fryr.cllg.17,
+    ntree = 1000,
+    mtry = 2
+  )
+
+# predictions to add to data frame
+forest.preds1 <- predict(fryr.cllg.forest1, type = "class")
+
+# adds predictions to data frame
+fryr.cllg.17six <- mutate(fryr.cllg.17, predType = forest.preds1)
+
+# Shows the accuracy of the predictions based on the true values
+accuracy(
+  data = fryr.cllg.17six,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Displays predictions in a table with true values
+conf_mat(data = fryr.cllg.17six, truth = fourcat, estimate = predType)
+
+# Will show the most important variables
+importance(fryr.cllg.forest1)
+
+
+##############################  K Nearest Neighbor  ############################
+set.seed(123)
+
+# College percent nearest neighbor with 7 nearest neighbors. Uses explanatory 
+# variables such as total enrollment and col_* to predict type of college 
+# (fourcat)
+fryr.cllg.knn <-
+  kknn(
+    as.factor(fourcat) ~ total_enrollment + col_white + col_hispa + 
+      col_black + col_asian + col_amind + col_pacis + col_twora,
+    train = fryr.cllg.17,
+    test = fryr.cllg.17,
+    k = 7
+  )
+
+# Gets the predictions 
+knn.preds <- fitted(fryr.cllg.knn)
+
+# Add predictions to data frame
+fryr.cllg.17svn <- mutate(fryr.cllg.17, predType = knn.preds)
+
+# Shows the accuracy of the model based on the predictions made
+accuracy(
+  data = fryr.cllg.17svn,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+  )
+
+
+# Market percent nearest neighbor with 7 nearest neighbors. Uses explanatory 
+# variables such as total enrollment and col_* to predict type of college 
+# (fourcat)
+fryr.cllg.knn1 <-
+  kknn(
+    as.factor(fourcat) ~ total_enrollment + mkt_white + mkt_hispa + 
+      mkt_black + mkt_asian + mkt_amind + mkt_pacis + mkt_twora,
+    train = fryr.cllg.17,
+    test = fryr.cllg.17,
+    k = 7
+  )
+
+# Gets the predictions
+knn.preds <- fitted(fryr.cllg.knn1)
+
+# Add predictions to data frame
+fryr.cllg.17eght <- mutate(fryr.cllg.17, predType = knn.preds)
+
+# Shows the accuracy of the model based on the predictions made
+accuracy(
+  data = fryr.cllg.17eght,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)
+
+# Difference percent nearest neighbor with 7 nearest neighbors. Uses explanatory 
+# variables such as total enrollment and col_* to predict type of college 
+# (fourcat)
+fryr.cllg.knn2 <-
+  kknn(
+    as.factor(fourcat) ~ total_enrollment + dif_white + dif_hispa + 
+      dif_black + dif_asian + dif_amind + dif_pacis + dif_twora,
+    train = fryr.cllg.17,
+    test = fryr.cllg.17,
+    k = 7
+  )
+
+# Gets the predictions
+knn.preds <- fitted(fryr.cllg.knn2)
+
+# Add predictions to data frame
+fryr.cllg.17nine <- mutate(fryr.cllg.17, predType = knn.preds)
+
+# Shows the accuracy of the model based on the predictions made
+accuracy(
+  data = fryr.cllg.17nine,
+  truth = as.factor(fourcat),
+  estimate = as.factor(predType)
+)

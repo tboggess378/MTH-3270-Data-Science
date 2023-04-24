@@ -1,0 +1,68 @@
+---
+title: "Midterm Project Part Two"
+author: "Tobias Boggess, Carl Perry"
+date: '2022-04-11'
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r include = FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rattle)
+library(mclust)
+library(yardstick)
+library(rpart)
+library(randomForest)
+library(kknn)
+
+my.file <- file.choose()
+fryr.cllg <-
+  read.csv(my.file,
+           header = TRUE,
+           sep = ",",
+           stringsAsFactors = FALSE)
+fryr.cllg.17 <- filter(.data = fryr.cllg, year == 2017)
+```
+
+## \center Task One \center
+\
+
+```{r include = FALSE, echo = TRUE}
+fryr.cllg.colwht.reg1 <-
+  lm(
+    col_white ~  col_hispa + col_black + col_asian +
+      col_amind + col_pacis + col_twora,
+    data = fryr.cllg.17
+  )
+
+summary(fryr.cllg.colwht.reg1)
+
+fryr.cllg.mktwht.reg1 <-
+  lm(
+    mkt_white ~ + mkt_hispa + mkt_black + mkt_asian +
+      mkt_amind + mkt_pacis + mkt_twora,
+    data = fryr.cllg.17
+  )
+
+summary(fryr.cllg.mktwht.reg1)
+```
+
+The equation produced by the first model is: 
+*College percent White* = 90.07997 - 0.97831 * *College percent Hispanic* - 0.95399 * *College percent Black* - 1.23876 * *College percent Asian* - 0.93534 * *College percent American Indian* - 1.07193 * *College percent Pacific Island* - 0.65145 * *College percent two or more races*.
+
+The equation produced by the second model is: 
+*Market percent White* = 100.434511 - 1.187212 * *Market percent Hispanic* - 1.007227 * *Market percent Black* - 1.790438 * *Market percent Asian* - 1.1.283475 * *Market percent American Indian* - 0.210605 * *Market percent Pacific Island* - 0.548759 * *Market percent two or more races*.
+\
+Each model did a decent job of predicting the percent of the white ethnicity whether it was for the college or the surrounding market. The model predicting the percent of the White ethnicity using the college percents had a data fit of 85.94% according to the multiple R-Squared value. Another way to tell how well the model that predicts the percent of white ethnicity is the residual standard error which is 9.047 resulting in a decent projection of how well the model does predicting future percentages.  
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,263 @@
+---
+title: "Class_Exercises_ClassNotes_7"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+```{r include = FALSE, echo = FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rattle)
+library(mclust)
+```
+
+## Section 12.1 Exercises
+
+### Exercise 1: Do the following.
+\
+Code:
+```{r include = TRUE}
+my.data <- data.frame(X1 = c(3, 5, 4, 7),
+                      X2 = c(6, 4, 9, 9),
+                      X3 = c(1, 7, 2, 1))
+rownames(my.data) <- c("Obs1", "Obs2", "Obs3", "Obs4")
+my.data
+
+my.data_dist <- dist(my.data, method = "euclidean")
+my.data_dist
+```
+
+#### a)  What’s the distance between Obs1 and Obs2?
+\
+The distance between obs1 and obs2 is 6.633250 units.
+
+#### b) Which two observations are ”closest” (least dissimilar) to each other?
+\
+The two observations closest to each other are obs3 and obs4.
+
+#### c) Which two observations would be merged in the first step of a hierarchical clustering procedure?
+\
+The two observations that would merge together first in a hierarchal clustering procedure would be obs3 and obs4.
+
+### Exercise 2: What’s the distance between Florida and Alabama?
+\
+Code:
+```{r include = TRUE}
+arr_dist <- dist(USArrests, method = "euclidean")
+head(arr_dist, n = 64)
+```
+The distance between Florida and Alabama is 102.001618 units.
+
+### Exercise 3: Do the following.
+\
+Code:
+```{r include = TRUE}
+head(wine)
+```
+\newpage
+```{r include = TRUE}
+wine2 <- select(wine, -Type)
+wine_dist <- dist(wine2, method = "euclidean")
+head(wine_dist, n = 50)
+```
+
+#### a) Now use wine_dist to carry out a hierarchical cluster analysis on the wines2 data set (which excludes Type), and produce the dendrogram. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+wine_hclust <- hclust(wine_dist)
+plot(wine_hclust, cex = 0.7)
+```
+\newpage
+
+#### b) Next, use rect.hclust() to plot red rectangles around k = 2 clusters in the dendrogram. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+plot(wine_hclust, cex = 0.7)
+rect.hclust(wine_hclust, k = 2, border = "red")
+```
+
+#### c) Finally, use cutree() to obtain k = 2 sets of observations (rows of the wines2 data frame) corresponding to the two clusters of part b. How many observations are in each of the two clusters?
+\
+Code:
+```{r include = TRUE}
+wine.clusters <- cutree(wine_hclust, k = 2)
+wine.clusters
+
+wine.clust1 <- filter(wine2, wine.clusters == 1)
+wine.clust2 <- filter(wine2, wine.clusters == 2)
+
+head(wine.clust1, n = 8)
+head(wine.clust2, n = 8)
+```
+
+There are 43 observations in cluster 1 and there are 135 observations in cluster 2.
+\newpage
+
+## Section 12.2 Exercises
+
+### Exercise 4: How many observations are in each of the three clusters (groups) identified by the k means procedure?
+\
+Code:
+```{r include = TRUE}
+my.x1 <-
+  c(5.2, 4.6, 5.9, 6.8, 10.5, 10.7, 8.6, 10.5, 14.1, 16.4, 14.3, 12.4)
+my.x2 <-
+  c(3.6, 4.7, 2.2, 4.5, 7.2, 7.3, 7.1, 9.9, 6.3, 4.2, 6.2, 3.3)
+my.data <- data.frame(x1 = my.x1, x2 = my.x2)
+
+# So that everyone has the same randomly selected starting cluster centers:
+set.seed(27)
+
+# Carry out the k means cluster analysis with k = 3:
+my_kmclust <- kmeans(my.data, centers = 3)
+my_kmclust
+```
+
+There are four observations in each cluster. 
+\newpage
+
+### Exercise 5: Do the following.
+
+#### a) Carry out a k means cluster analysis on the wine2 data set, with k = 3. Compare the scatterplot matrix showing the identified clusters with one showing the wine types. Do the clusters correspond to wine types?
+\
+Code:
+```{r include = TRUE}
+# So that everyone has the same randomly selected starting cluster centers:
+set.seed(20)
+
+# Carry out the k means cluster analysis with k = 3:
+wine_kmclust <- kmeans(wine2, centers = 3)
+wine_kmclust
+
+my.clusters <- wine_kmclust$cluster
+pairs(wine2,
+      col = my.clusters,
+      main = "Scatterplot Matrix of Wine Data With Clusters",
+      pch = 19)
+```
+\newpage
+```{r include = TRUE}
+pairs(wine2,
+      col = wine$Type,
+      main = "Scatterplot Matrix of Wine Data With Types",
+      pch = 19)
+```
+
+The clusters do not correspond to the types of wine. 
+
+#### b) For cluster analysis, if the variables are measured on very different scales, it’s best to standardize each one so that distances along each coordinate axis in p-dimensional space are comparable. Re-run the cluster analysis after standardizing each of the 13 variables in wine2. Now compare the scatterplot matrix showing the identified clusters with the one showing the wine Types.Now do the clusters correspond (at least approximately) to wine Types?
+\
+Code:
+```{r include = TRUE}
+# Standardize each of the 13 variables:
+wine2_std <- scale(wine2, center = TRUE, scale = TRUE)
+
+# So that everyone has the same randomly selected starting cluster centers:
+set.seed(20)
+
+# Carry out the k means cluster analysis with k = 3:
+wine_kmclust_std <- kmeans(wine2_std, centers = 3)
+wine_kmclust_std
+```
+\newpage
+```{r include = TRUE}
+my.clusters_std <- wine_kmclust_std$cluster
+
+pairs(wine2,
+      col = my.clusters_std,
+      main = "Scatterplot Matrix of Wine Data With Clusters",
+      pch = 19)
+```
+\newpage
+```{r include = TRUE}
+pairs(wine2,
+      col = wine$Type,
+      main = "Scatterplot Matrix of Wine Data With Types",
+      pch = 19)
+```
+
+The clusters correspond to the wine types. 
+
+## Section 12.3 Exercises
+
+### Exercise 6: Do the following.
+\
+Setup:
+```{r include = TRUE}
+wine2 <- select(wine,-Type)
+
+summarise(wine2, across(everything(), list(mean = mean)))
+wine2_cntr <-
+  scale(wine2, center = TRUE, scale = FALSE) %>% as.data.frame()
+
+head(wine2_cntr, n = 3)
+
+my.pca <- svd(wine2_cntr)
+
+head(my.pca$v, n = 5)
+my.pca$d
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(d = my.pca$d, j = 1:13),
+       mapping = aes(x = j, y = d)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Plot of d vs j")
+```
+
+#### a) The Vj’s whose d values are close to zero carry very little information and can be discarded. How many of the more informative Vj’s would you suggest keeping?
+\
+I would consider keeping the two of the three more informative variables. However, the most significant variable would be enough for a useful prediction. 
+\newpage
+
+#### b) The Vj’s whose d values are close to zero carry very little information and can be discarded. Now how many of the more informative Vj’s would you suggest keeping?
+\
+Code:
+```{r include = TRUE}
+# Standardize each of the 13 variables:
+wine2_std <- scale(wine2, center = TRUE, scale = TRUE)
+my.pca_std <- svd(wine2_std)
+my.pca_std$d
+
+ggplot(data = data.frame(d = my.pca_std$d, j = 1:13),
+       mapping = aes(x = j, y = d)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Plot of d vs j")
+```
+
+I would suggest keeping the four to eight most informative variables as a balance of keeping complexity to a minimum while obtaining a more accurate model. 
+\newpage
+
+### Exercise 7: Which variable, V1 or V2, is reflecting length and which is reflecting width?
+\
+Code:
+```{r include = TRUE}
+virginica <- iris %>%
+  filter(Species == "virginica") %>%
+  select(-Species)
+
+colMeans(virginica)
+virginica_cntr <- scale(virginica, center = TRUE, scale = FALSE) %>%
+  as.data.frame()
+head(virginica_cntr, n = 3)
+my.pca <- svd(virginica_cntr)
+my.pca$v
+my.pca$d
+```
+
+The variable V1 is depicting length and V2 is conveying the width. 
+
+
+
+
+
+
+
+
+
+

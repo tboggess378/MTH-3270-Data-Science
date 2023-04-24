@@ -1,0 +1,766 @@
+---
+title: "MTH 3270 Notes 5"
+author: "Tobias Boggess"
+date: "2/28/2022"
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+---
+
+## Section 9.3 Exercises
+
+### Exercise 1: Do the following.
+
+#### a) Using a for() loop and rnorm(), simulate 1,000 random samples of size n = 10 from a N(50, 15) population (i.e. μ = 50 and σ = 15), compute the sample mean  ̄X of each sample, and store the  ̄X values in a 1,000-element vector named, say, sim.sample_means. Report your R command(s).
+
+Code:
+```{r include = TRUE}
+sim.sample_means <- rep(NA, 1000)
+for(i in 1:1000) {
+  sim.sample <- rnorm(n = 10, mean = 50, sd = 15)
+  sim.sample_means[i] <- mean(sim.sample)
+}
+head(sim.sample_means, 5)
+```
+
+#### b) Now use mean() and sd() to compute the mean and standard error of the 1,000  ̄X values. Report these two values.
+
+Code:
+```{r include = TRUE}
+sim.mean <- mean(sim.sample_means)
+sim.mean
+sim.sd <- sd(sim.sample_means)
+sim.sd
+```
+\newpage
+
+#### c) Recall that if a random sample of size n is drawn from a N(μ, σ) population, the sampling distribution of  ̄X (obtained via mathematical theory) is N(μ, σ/√n).Compare the two values of Part a to the theoretical mean and standard error, μ and σ/√n, of the sampling distribution of  ̄X.
+
+Code:
+```{r include = TRUE}
+diff.x_bar <- sim.mean - 50
+diff.x_bar
+diff.x_sd <- sim.sd - (15 / sqrt(1000))
+diff.x_sd
+```
+\newpage
+
+#### d) Make a histogram of the 1,000 simulated  ̄X values. Compare the shape, center, and spread of the histogram to the theoretical N(μ, σ/√n) sampling distribution of  ̄X.
+
+Code:
+```{r include = TRUE}
+library(ggplot2)
+
+ggplot(data = data.frame(sim.sample_means)) +
+  geom_histogram(mapping = aes(x = sim.sample_means, y = stat(density))) +
+  geom_function(fun = dnorm,
+                args = list(mean = 50, sd = 15 / sqrt(10)),
+                color = "blue") +
+  labs(title = "Sampling Distribution")
+```
+\newpage
+
+### Exercise 2: Simulate 1,000 random samples of size n = 5 from a N(50, 15) population (i.e. μ = 50 and σ = 15), and compute the four statistics below for each sample.In each case: 1) Report the mean and standard error of the simulated statistic values, and 2) Plot the simulated values in a histogram and describe the shape, center, and spread of this sampling distribution.
+
+#### a) The sample median  ̃X (use median()).
+
+#### b) The sample standard deviation S (use sd()).
+
+#### c) The sample minimum X(1) (use min()).
+
+#### d) The sample maximum X(n) (use max()).
+
+Code:
+```{r include = TRUE}
+rand_samp_median <- rep(NA, 1000)
+rand_samp_min <- rep(NA, 1000)
+rand_samp_max <- rep(NA, 1000)
+rand_samp_sd <- rep(NA, 1000)
+
+for (i in 1:1000) {
+  rand_samp <- rnorm(n = 5, mean = 50, sd = 15)
+  rand_samp_median[i] <- median(rand_samp)
+  rand_samp_sd[i] <- sd(rand_samp)
+  rand_samp_min[i] <- min(rand_samp)
+  rand_samp_max[i] <- max(rand_samp)
+}
+
+mean.of_median <- mean(rand_samp_median)
+mean.of_sd <- mean(rand_samp_sd)
+mean.of_min <- mean(rand_samp_min)
+mean.of_max <- mean(rand_samp_max)
+
+sd.of_median <- sd(rand_samp_median)
+sd.of_sd <- sd(rand_samp_sd)
+sd.of_min <- sd(rand_samp_min)
+sd.of_max <- sd(rand_samp_max)
+
+
+ggplot(data = data.frame(rand_samp_median)) +
+  geom_histogram(mapping = aes(x = rand_samp_median, y = stat(density))) +
+  labs(title = "Medians")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(rand_samp_sd)) +
+  geom_histogram(mapping = aes(x = rand_samp_sd, y = stat(density))) +
+  labs(title = "Standard Deviations")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(rand_samp_min)) +
+  geom_histogram(mapping = aes(x = rand_samp_min, y = stat(density))) +
+  labs(title = "Minimums")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(rand_samp_max)) +
+  geom_histogram(mapping = aes(x = rand_samp_max, y = stat(density))) +
+  labs(title = "Maximums")
+
+mean.of_median
+mean.of_sd
+mean.of_min
+mean.of_max
+
+sd.of_median
+sd.of_sd
+sd.of_min
+sd.of_max
+```
+
+## Section 9.4 Exercises
+
+### Exercise 3: Use the bootstrap method to simulate B = 1,000 resamples each of size n = 150 from the original iris data set, and using the Petal.Width variable, compute the four statistics below for each bootstrap resample.
+
+Code:
+```{r include = TRUE}
+library(dplyr)
+n.rows <- nrow(iris)
+B <- 1000
+boot.samp_medians <- rep(NA, B)
+boot.samp_sds <- rep(NA, B)
+boot.samp_mins <- rep(NA, B)
+boot.samp_maxs <- rep(NA, B)
+
+set.seed(21)
+```
+
+```{r include = TRUE}
+for (i in 1:B) {
+  resamp <- slice_sample(.data = iris,
+                         n = n.rows,
+                         replace = TRUE)
+  boot.samp_medians[i] <- median(resamp$Petal.Width)
+  boot.samp_sds[i] <- sd(resamp$Petal.Width)
+  boot.samp_mins[i] <- min(resamp$Petal.Width)
+  boot.samp_maxs[i] <- max(resamp$Petal.Width)
+}
+
+ggplot(data = data.frame(boot.samp_medians)) +
+  geom_histogram(mapping = aes(x = boot.samp_medians)) +
+  labs(title = "Medians")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(boot.samp_sds)) +
+  geom_histogram(mapping = aes(x = boot.samp_sds)) +
+  labs(title = "Standard Deviations")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(boot.samp_mins)) +
+  geom_histogram(mapping = aes(x = boot.samp_mins)) +
+  labs(title = "Minimums")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = data.frame(boot.samp_maxs)) +
+  geom_histogram(mapping = aes(x = boot.samp_maxs)) +
+  labs(title = "Maximums")
+
+median.mean <- mean(boot.samp_medians)
+sd.mean <- mean(boot.samp_sds)
+min.mean <- mean(boot.samp_mins)
+max.mean <- mean(boot.samp_maxs)
+
+median.sd <- sd(boot.samp_medians)
+sd.sd <- sd(boot.samp_sds)
+min.sd <- sd(boot.samp_mins)
+max.sd <- sd(boot.samp_maxs)
+
+median.mean
+sd.mean
+min.mean
+max.mean
+
+median.sd
+sd.sd
+min.sd
+max.sd
+```
+
+## Section 9.5 Exercises
+
+### Exercise 4: Do the following.
+
+Dataframe:
+```{r include = TRUE}
+SnakeID <- 1:10
+Ln <- c(85.7, 64.5, 84.1, 82.5, 78.0, 65.9, 81.3, 71.0, 86.7, 78.7)
+Wt <-
+  c(331.9,
+    121.5,
+    382.2,
+    287.3,
+    224.3,
+    380.4,
+    245.2,
+    208.2,
+    393.4,
+    228.3)
+Snakes <- data.frame(SnakeID, Ln, Wt)
+```
+\newpage
+
+#### a) Can you identify the outlier in either of these univariate graphs (histograms)?
+
+Code:
+```{r include = TRUE}
+ggplot(data = Snakes) +
+  geom_histogram(
+    mapping = aes(x = Ln),
+    fill = "blue",
+    color = "white",
+    bins = 5
+  ) +
+  ggtitle("Histogram of Snakes Lengths")
+```
+\newpage
+
+```{r include = TRUE}
+ggplot(data = Snakes) +
+  geom_histogram(
+    mapping = aes(x = Wt),
+    fill = "blue",
+    color = "white",
+    bins = 5
+  ) +
+  ggtitle("Histogram of Snakes Weights")
+```
+The only outlier in the two graphs is the weight of the snakes. The outlier value is 121.5. 
+\newpage
+
+#### b) Can you identify the outlier in this bivariate graph (scatterplot)? If so, which snake (SnakeID) is the outlier?
+
+Code:
+```{r include = TRUE}
+ggplot(data = Snakes) +
+  geom_point(mapping = aes(x = Ln, y = Wt)) +
+  ggtitle("Scatterplot of Weights vs Lengths")
+```
+The major outlier is the snake whose length is 65.9 with a weight of 380.4 and the second most significant outlier is the snake with a 64.5 length and a 121.5 weight. 
+\newpage
+
+## Section 9.6 Exercises
+
+### Exercise 5: Do the following.
+
+Data frame:
+```{r include = TRUE}
+SnakeID <- 1:9
+Ln <- c(85.7, 64.5, 84.1, 82.5, 78.0, 81.3, 71.0, 86.7, 78.7)
+Wt <-
+  c(331.9, 121.5, 382.2, 287.3, 224.3, 245.2, 208.2, 393.4, 228.3)
+Snakes <- data.frame(SnakeID, Ln, Wt)
+
+ggplot(data = Snakes, mapping = aes(x = Ln, y = Wt)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  ggtitle("Scatterplot of Weights vs Lengths")
+```
+\newpage
+```{r include = TRUE}
+my.reg <- lm(Wt ~ Ln, data = Snakes)
+summary(my.reg)
+```
+
+#### a) Obtain the predicted weight for a snake whose length is 80 cm in two ways:
+1. By plugging 80 into the equation for X.
+2. By using predict().
+Report both sets of your R commands for obtaining the predicted weight.
+\
+Code:
+```{r include = TRUE}
+pred_val <- -601.08 + 10.99 * 80
+pred_val
+
+newLen <- data.frame(Ln = 80)
+predict(my.reg, newdata = newLen)
+```
+
+#### b) What’s a typical change in weight for each 1 cm elongation? What about for a 5 cm elongation?
+\
+Code:
+```{r include = TRUE}
+newLen <- data.frame(Ln = c(80, 81))
+predict(my.reg, newdata = newLen)
+```
+
+For every centimeter change in length, the weight should increase by approximately 11 and for five cm it should be approximately 55. 
+
+### Exercise 6: Do the following.
+\
+Data frame:
+```{r include = TRUE}
+library(nycflights13)
+SF <- filter(.data = flights, dest == "SFO", !is.na(arr_delay))
+
+ggplot(data = SF, mapping = aes(x = hour, y = dep_delay)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  xlab("Scheduled Hour of Departure") +     ylab("Departure Delay (Minutes)") +
+  coord_cartesian(ylim = c(-30, 200))
+```
+\newpage
+
+#### a) Use lm() and summary() to obtain the equation of the fitted regression line, with with dep_delay as the response (Y ) and hour as the explanatory variable (X). Report the equation of the fitted line.
+\
+Code:
+```{r include = TRUE}
+my.reg2 <- lm(dep_delay ~ hour, data = SF)
+summary(my.reg2)
+
+```
+The equation of the fitted line is Y = -10.95593 + 1.86451X.
+
+#### b) Obtain the predicted departure delay for a flight whose departure hour is 15 in two ways:
+1. By plugging 15 into the equation for X.
+2. By using predict().
+Report both sets of your R commands for obtaining the predicted departure delay.
+\
+Code:
+```{r include = TRUE}
+-10.95593 + 1.86451 * 15
+
+newHour <- data.frame(hour = 15)
+predict(my.reg2, newdata = newHour)
+```
+The departure delay will increase by 1.86451 for each hour that is additional. 
+
+## Section 9.6 Exercises
+
+### Exercise 7: Do the following.
+\
+Data frame:
+```{r include = TRUE}
+SnakeID <- 1:9
+Ln <- c(85.7, 64.5, 84.1, 82.5, 78.0, 81.3, 71.0, 86.7, 78.7)
+Wt <-
+  c(331.9, 121.5, 382.2, 287.3, 224.3, 245.2, 208.2, 393.4, 228.3)
+Snakes <- data.frame(SnakeID, Ln, Wt)
+my.reg <- lm(Wt ~ Ln, data = Snakes)
+```
+
+#### a) What class of object is returned by lm()? Find out by typing:
+\
+Code:
+```{r include = TRUE}
+class(my.reg)
+```
+
+#### b) The "lm" class of objects is a special case of the "list" class. What does the following return?
+\
+Code:
+```{r include = TRUE}
+is.list(my.reg)
+```
+
+#### c) How many objects are contained in the my.reg list? Find out by looking at their names:
+\
+Code:
+```{r include = TRUE}
+names(my.reg)
+```
+
+#### d) What would a plot of the fitted values versus the lengths look like? Try it, and describe the result:
+\
+Code:
+```{r include = TRUE}
+library(dplyr) # For mutate()
+Snakes <- mutate(Snakes, FittedVals = my.reg$fitted.values)
+ggplot(data = Snakes, mapping = aes(x = Ln, y = FittedVals)) +
+  geom_point() +
+  ggtitle("Scatterplot of Fitted Values vs Lengths")
+```
+The output is almost a perfect linear representation of the snakes data.
+\newpage
+
+#### e) What would a plot of the residuals versus the lengths look like? Try it (with a horizontal line at y = 0) and describe the result:
+\
+Code:
+```{r include = TRUE}
+Snakes <- mutate(Snakes, Residuals = my.reg$residuals)
+ggplot(data = Snakes, mapping = aes(x = Ln, y = Residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  ggtitle("Scatterplot of Residuals vs Lengths")
+```
+The residuals seem pretty far off compared to the horizontal line. 
+
+#### f) Show that the residuals sum to zero:
+\
+Code:
+```{r include = TRUE}
+sum(Snakes$Residuals)
+```
+\newpage
+
+### Exercise 8: Do the following.
+\
+Code:
+```{r include = TRUE}
+ggplot(data = SF, mapping = aes(x = hour, y = dep_delay)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  xlab("Scheduled Hour of Departure") + ylab("Departure Delay (Minutes)") +
+  coord_cartesian(ylim = c(-30, 200))
+```
+\newpage
+```{r include = TRUE}
+my.reg <- lm(dep_delay ~ hour, data = SF)
+summary(my.reg)
+```
+
+#### a) From the output of summary(), what’s the value of the residual standard error?
+\
+The residual standard error is: 39.34.
+
+#### b) From the output of summary(), what’s the value of R2 (labeled Multiple R-squared)?
+\
+The value of R2 is 0.0427. 
+
+#### c) Using the criteria below (and the R2 from part b), how well does the linear model fit the data (poor, medium, or good)?
+\
+The model fit based on the R2 section shows the fit is poor. 
+\newpage
+
+### Exercise 9: Do the following.
+\
+Data frame:
+```{r include = TRUE}
+Sales <- c(
+  174.4,
+  164.4,
+  244.2,
+  154.6,
+  181.6,
+  207.5,
+  152.8,
+  163.2,
+  145.4,
+  137.2,
+  241.9,
+  191.1,
+  232.0,
+  145.3,
+  161.1,
+  209.7,
+  146.4,
+  144.0,
+  232.6,
+  224.1,
+  166.5
+)
+Under16 <- c(
+  68.5,
+  45.2,
+  91.3,
+  47.8,
+  46.9,
+  66.1,
+  49.5,
+  52.0,
+  48.9,
+  38.4,
+  87.9,
+  72.8,
+  88.4,
+  42.9,
+  52.5,
+  85.7,
+  41.3,
+  51.7,
+  89.6,
+  82.7,
+  52.3
+)
+```
+
+```{r include = TRUE}
+Income <-
+  c(
+    16.7,
+    16.8,
+    18.2,
+    16.3,
+    17.3,
+    18.2,
+    15.9,
+    17.2,
+    16.6,
+    16.0,
+    18.3,
+    17.1,
+    17.4,
+    15.8,
+    17.8,
+    18.4,
+    16.5,
+    16.3,
+    18.1,
+    19.1,
+    16.0
+  )
+portraitSales <- data.frame(Sales, Under16, Income)
+```
+
+#### a) Use lm() to fit a multiple regression model with portrait Sales as the response (Y ) and number of persons Under16 (X1) and per capita Income (X2) as explanatory variables. Then use summary() to obtain the results. Write out the equation of the fitted plane.
+\
+Code:
+```{r include = TRUE}
+my.reg3 <- lm(Sales ~ Under16 + Income, data = portraitSales)
+summary(my.reg3)
+```
+Equation: Y = -68.8571 + 1.4546 * X1 + 9.3655 * X2.
+
+#### b) Obtain the predicted sales for a city whose number of persons under 16 is 45.0 (thousand) and whoseper capita income is 17.0 (thousand dollars) in two ways:
+1. By plugging 45.0 and 17.0 into the equation for X1 and X2.
+2. By using predict().
+Report both sets of your R commands for obtaining the predicted sales.
+\
+Code:
+```{r include = TRUE}
+-68.8471 + 1.4546 * 45 + 9.3655 * 17
+
+newUndInc <- data.frame(Under16 = 45.0, Income = 17.0)
+predict(my.reg3, newdata = newUndInc)
+```
+
+#### c) By how much do we expect sales to increase for each additional 1.0 thousand people under 16 (holding income constant)?
+\
+We can expect sales to increase by approximately 1.4546 (thousand) for each increase in people under 16 holding income constant. 
+
+#### d) By how much do we expect sales to increase for each additional 1.0 thousand dollars in per capita income (holding number of people under 16 constant)?
+\
+We can expect an approximate gain of 9.3655 gain of sales based on the income holding the number of people under 16 constant. 
+\newpage
+
+### Exercise 10: Do the following using the cdi data set.
+
+Load in Library:
+```{r include = FALSE}
+my.file <- file.choose()
+cdi <- read.csv(my.file, header = TRUE, sep = "", stringsAsFactors = FALSE)
+```
+
+#### a) Use pairs() to make a scatterplot matrix of these variables. Report your R command.
+\
+Code:
+```{r include = TRUE}
+pairs(select(cdi, -c(ID, County, State, Region)))
+```
+\newpage
+
+#### b) Use cor() to make the correlation matrix of the data. Report your R command.
+\
+Code:
+```{r include = TRUE}
+cor_cdi <- cor(select(cdi, LandArea:TotInc))
+head(cor_cdi, 3)
+```
+```{r include = TRUE}
+cdi_nPhys <- lm(nActPhys ~ TotPop + LandArea + TotInc, data = cdi)
+summary(cdi_nPhys)
+```
+The Equation:
+Y = -1.332e+01 + 8.366e-04 * X1 - 6.552e-02 * X2 + 9.413e-02 * X3
+\newpage
+
+#### d) Obtain the predicted number of active physicians for a county with a total population of 400,000, a land area of 1,000 square miles, and total personal income of 8,000 million dollars in two ways:
+1. By plugging 400,000, 1,000, and 8,000 into the equation for X1, X2, and X3.
+2. By using predict().
+
+```{r include = TRUE}
+-13.32 + 0.0008366 * 400000 - 0.06552 * 1000 + 0.09413 * 8000
+
+newCdi <- data.frame(TotPop = 400000, 
+                     LandArea = 1000,
+                     TotInc = 8000)
+predict(cdi_nPhys, newdata = newCdi)
+```
+
+#### e) How much does number of active physicians increase for each additional 1-person increase in total population (holding land area and total personal income constant)?
+\
+For each additional person, there is an increase of 0.0008366 active physicians. 
+
+#### f) How much does number of active physicians increase for each additional 1.0 million dollars in totalpersonal income (holding land area and total population constant)?
+\
+The increase in active physicians increases by 0.09413 for each additional 1.0 million dollars in total personal income. 
+
+### Exercise 11: Do the following.
+\
+Data frame:
+```{r include = TRUE}
+cdi <- mutate(cdi, PopDens = TotPop/LandArea)
+```
+\newpage
+
+#### a) Use lm() to fit a multiple regression model with number of active physicians as the response (Y ) and population density (X1), percent of population 65 or older (X2), and per capita income (X3) as explanatory variables. Then use summary() to obtain the results. Report the equation of the fitted model.
+\
+Code:
+```{r include = TRUE}
+cdi.reg <- lm(nActPhys ~ PopDens + PctPop65 + PerCapInc, data = cdi)
+summary(cdi.reg)
+```
+Equation:
+Y = -1.088e+03 + 2.873e-01 * x1 - 7.964e+00 * X2 + 1.033e-01 * X3
+
+#### b) Obtain the predicted number of active physicians for a county with a population density of 900 per square mile, 15 percent of its population over 65, and per capita income of 20,000 dollars in two ways:
+1. By plugging 900, 15, and 20,000 into the equation for X1, X2, and X3.
+2. By using predict().
+Report both sets of your R commands for obtaining the predicted number of active physicians.
+\
+Code:
+```{r include = TRUE}
+-1.088e+03 + 2.873e-01 * 900 -7.964e+00 * 15 + 1.033e-01 * 20000
+
+newCdi_PopDens <- data.frame(PopDens = 900,
+                             PctPop65 = 15,
+                             PerCapInc = 20000)
+predict(cdi.reg, newdata = newCdi_PopDens)
+```
+
+### Exercise 12: Do the following.
+\
+Data frame:
+```{r include = TRUE}
+my.reg <- lm(nActPhys ~ TotPop + LandArea + TotInc, data = cdi)
+summary(my.reg)
+
+cdi <- mutate(cdi, PopDens = TotPop / LandArea)
+my.reg <- lm(nActPhys ~ PopDens + PctPop65 + PerCapInc, data = cdi)
+summary(my.reg)
+```
+
+#### a) Using the residual standard error in the output from summary(), which model fits the data better? Hint: A smaller residual standard error indicates a better fitting model.
+\
+The better fitting model is the one containing the total population, land area, and total income based on the residual standard error.
+
+#### b) Using the R2 (labeled Multiple R-squared) in the output from summary(), which model fits the data better? Hint: A larger R2 indicates a better fitting model.
+\
+The first still indicates a better fitting model based on R2. 
+
+#### c) Based on your answers to Parts a and b, which model would you expect to give better predictions of the number of active physicians in a county?
+\
+I would expect the first model to provide a better prediction based on the two errors seen in parts *a* and *b*. 
+
+```{r include = TRUE}
+dues.file <- file.choose()
+
+dues <- read.csv(dues.file, header = TRUE, sep = "", stringsAsFactors = FALSE)
+
+head(dues)
+```
+\newpage
+ 
+## Section 9.7 Exercises
+
+### Exercise 13: Do the following.
+```{r include = TRUE}
+my.logreg <-
+  glm(NotRenew ~ DuesIncr, family = "binomial", data = dues)
+summary(my.logreg)
+```
+
+#### a) Obtain the (estimated) probability that a person won’t renew their membership if the dues increase is 45 dollars in two ways:
+1. By plugging 45 into the equation for X.
+2. By using predict().
+\
+Code:
+```{r include = TRUE}
+exp(-15.42 + 0.39 * 45)/(1 + exp(-15.42 + 0.39 * 45))
+
+newDues <- data.frame(DuesIncr = 45)
+predict(my.logreg, newDues, type = "response")
+```
+
+#### b) Now obtain the (estimated) probability that a person won’t renew their membership if the dues increase is only 35 dollars dollars in two ways:
+1. By plugging 35 into the equation for X.
+2. By using predict(). Report both sets of your R commands for obtaining the (estimated) probability of not renewing.
+\
+Code:
+```{r include = TRUE}
+exp(-15.42 + 0.39 * 35)/(1 + exp(-15.42 + 0.39 * 35))
+
+newDues <- data.frame(DuesIncr = 35)
+predict(my.logreg, newDues, type = "response")
+```
+\newpage
+i
+## Section 9.8 Exercises
+
+### Exercise 14: Do the following.
+\
+Data:
+```{r include = TRUE}
+Ln <- c(85.7, 64.5, 84.1, 82.5, 78.0, 81.3, 71.0, 86.7, 78.7)
+Wt <-
+  c(331.9, 121.5, 382.2, 287.3, 224.3, 245.2, 208.2, 393.4, 228.3)
+snakes <- data.frame(Length = Ln, Weight = Wt)
+
+g <- ggplot(Snakes, aes(x = Ln, y = Wt)) + geom_point()
+# Eighth degree polynomial model (Model 8):
+g + stat_smooth(method = "lm",
+                formula = y ~ poly(x, 8),
+                se = F) +
+  ggtitle(label = "Model 8")
+```
+\newpage
+```{r include = TRUE}
+g + stat_smooth(method = "lm", formula = y ~ x, se = F) +
+  ggtitle(label = "Linear Model")
+```
+\newpage
+```{r include = TRUE}
+# Models with five new snakes
+newSnakes <- data.frame(Ln = c(67, 72, 77, 81, 86),
+                        Wt = c(127.9, 153.7, 204.7, 300.6,   291.4))
+
+g_new <- ggplot(Snakes, aes(x = Ln, y = Wt)) +
+  geom_point(alpha = 0.05)
+
+g_new + stat_smooth(method = "lm",
+                    formula = y ~ poly(x, 8),
+                    se = F) +
+  ggtitle(label = "Model 8 with New Snakes") +
+  geom_point(data = newSnakes)
+```
+\newpage
+```{r include = TRUE}
+g_new + stat_smooth(method = "lm",
+                    formula = y ~ x,
+                    se = F) +
+  ggtitle(label = "Linear Model with New Snakes") +
+  geom_point(data = newSnakes)
+```
+
+
+#### a) How well does the fitted model predict the weights of the original nine snakes?
+\
+The model 8 graph seems to fit the points better than the linear model.  
+
+#### b) How well do you think the fitted model would predict the weights of five new snakes?
+\
+The model 8 had a huge amount of error in one of the points for a sample of new snakes. Overall, the new snakes fit better with the linear model even though the linear model has the appearance of more error for more of the points. 

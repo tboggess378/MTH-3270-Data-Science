@@ -1,0 +1,584 @@
+---
+title: "Class_Exercises_ClassNotes_4"
+author: "Tobias Boggess"
+date: "2/21/2022"
+output: pdf_document
+---
+
+## Section 6.2 Exercises
+### Exercise 1: Write a command involving pivot_longer() that converts xWide to narrow format. Name the columns Grp and Y. Report your R command.
+\
+Code:
+```{r include = TRUE}
+library(tidyr)
+xWide <- data.frame(
+  GrpA = c(1, 4, 2, 3),
+  GrpB = c(7, 5, 8, 6),
+  GrpC = c(9, 9, 8, 7)
+)
+xWide
+
+pivot_longer(data = xWide, cols = c("GrpA", "GrpB", "GrpC"))
+```
+
+### Exercise 2: Do the following.
+\
+Code:
+```{r include = TRUE}
+xNarrow <- data.frame(
+  Subject = c(1:5, 1:5),
+  Period = c(
+    "Before",
+    "Before",
+    "Before",
+    "Before",
+    "Before",
+    "After",
+    "After",
+    "After",
+    "After",
+    "After"
+  ),
+  Y = c(22, 45, 32, 45, 30, 60, 44, 24, 56, 59),
+  stringsAsFactors = FALSE
+)
+xNarrow
+```
+
+#### a) Write a command involving pivot_wider() that converts xNarrow to a wide format. Report your R command.
+\
+Code:
+```{r include = TRUE}
+pivot_wider(
+  data = xNarrow,
+  names_from = Period,
+  values_from = Y
+)
+```
+
+#### b) What would happen if the Subject variable was missing? Try it by running the command you wrote for part a on the following data frame:
+\
+Code:
+```{r include = TRUE}
+xNarrowNoSubject <-
+  data.frame(
+    Period = c(
+      "Before",
+      "Before",
+      "Before",
+      "Before",
+      "Before",
+      "After",
+      "After",
+      "After",
+      "After",
+      "After"
+    ),
+    Y = c(22, 45, 32, 45, 30, 60, 44, 24, 56, 59),
+    stringsAsFactors = FALSE
+  )
+
+pivot_wider(
+  data = xNarrowNoSubject,
+  names_from = Period,
+  values_from = Y
+)
+```
+This provides a warning "Warning: Values from `Y` are not uniquely identified; output will contain list-cols. * Use `values_fn = list` to suppress this warning. * Use `values_fn = {summary_fun}` to summarise duplicates. * Use the following dplyr code to identify duplicates.  {data} %>%    dplyr::group_by(Period) %>%    dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%    dplyr::filter(n > 1L)" and only prints a single line.
+\newpage
+
+### Exercise 3: Write a command involving pivot_longer() and the ”helper” function num_range() that converts xWide to narrow format. Report your R command
+\
+Code:
+```{r include = TRUE}
+xWide <- data.frame(
+  Subject = c(1001, 1002, 1003),
+  t1 = c(22, 45, 32),
+  t2 = c(45, 30, 60),
+  t3 = c(44, 24, 56),
+  t4 = c(55, 27, 53)
+)
+
+pivot_longer(data = xWide, cols = num_range("t", 0:100))
+```
+
+### Exercise 4: What happens to the Gender column when you convert xWide to narrow format? Try it, by typing:
+\
+Code:
+```{r include = TRUE}
+xWide <- data.frame(
+  Subject = c(1001, 1002, 1003),
+  Gender = c("m", "f", "f"),
+  t1 = c(22, 45, 32),
+  t2 = c(45, 30, 60),
+  t3 = c(44, 24, 56),
+  t4 = c(55, 27, 53)
+)
+xWide
+
+xNarrow <- pivot_longer(
+  data = xWide,
+  cols = num_range("t", 1:4),
+  names_to = "Time",
+  values_to = "Y"
+)
+
+xNarrow
+```
+This printed the Gender column in accordance to the Time column.
+
+## Section 6.3 Exercises
+### Exercise 5: Write a command involving separate() that separates the rate column into two columns named cases and population. Report your R command.
+\
+Code:
+```{r include = TRUE}
+library(dplyr)
+diseases <- data.frame(
+  country = c(
+    "Afghanistan",
+    "Afghanistan",
+    "Brazil",
+    "Brazil",
+    "China",
+    "China"
+  ),
+  year = c(1999, 2000, 1999, 2000, 1999, 2000),
+  rate = c(
+    "745/19987071",
+    "2666/20595360",
+    "37737/172006362",
+    "80488/174504898",
+    "212258/1272915272",
+    "213766/1280428583"
+  )
+)
+diseases
+
+separate(data = diseases, col = rate, into = c("cases", "population"), sep = "/")
+```
+\newpage
+
+### Exercise 6: Write a command involving unite() that combines the Month, Day, and Year columns into a single column named Date having the form month/day/year. Report your R command.
+\
+Code:
+```{r include = TRUE}
+year <-
+  c(2017,
+    2017,
+    2017,
+    2017,
+    2017,
+    2017,
+    2017,
+    2018,
+    2018,
+    2018,
+    2018,
+    2018,
+    2018,
+    2018)
+month <- c(6, 6, 7, 7, 7, 8, 8, 6, 6, 7, 7, 7, 8, 8)
+day <- c(4, 18, 2, 16, 30, 13, 27, 3, 17, 1, 15, 29, 12, 26)
+phosphate <-
+  c(2.42,
+    3.50,
+    1.78,
+    2.46,
+    0.66,
+    1.16,
+    0.68,
+    0.90,
+    1.11,
+    1.25,
+    2.28,
+    1.36,
+    0.43,
+    2.90)
+nitrate <-
+  c(3.38,
+    3.87,
+    1.28,
+    3.45,
+    NA,
+    3.64,
+    1.88,
+    6.16,
+    2.55,
+    2.98,
+    3.90,
+    3.31,
+    4.19,
+    5.35)
+river <- data.frame(
+  Year = year,
+  Month = month,
+  Day = day,
+  Phosphate = phosphate,
+  Nitrate = nitrate
+)
+head(river)
+
+new_river <-
+  unite(data = river,
+        col = "Date",
+        c(Month, Day, Year),
+        sep = "/")
+
+head(new_river)
+```
+\newpage
+
+## Section 6.4 Exercises
+### Exercise 7: create an R data frame containing the data from the fourth table of world record times for the mile run. Report your R commands.
+\
+Code:
+```{r include = TRUE}
+library(rvest)
+url <-
+  "https://en.wikipedia.org/wiki/Mile_run_world_record_progression"
+tables <- url %>% read_html() %>% html_nodes("table")
+Table4 <- html_table(tables[[4]])
+head(Table4)
+```
+
+### Exercise 8: Using the approach described above, create an R data frame containing the data from the fifth table of populations. Report your R commands. 
+\
+Code:
+```{r include = TRUE}
+url1 <- "https://en.wikipedia.org/wiki/World_population"
+tables <- url1 %>% read_html() %>% html_nodes("table")
+Table5 <- html_table(tables[[5]])
+head(Table5)
+```
+
+## Section 6.5 Exercises
+### Exercise 9: Now recode heat from integers to "character" values ("hot air", "hot water", and "electric") by using left_join() to merge Houses_small with Codes, matching rows in Codes and Houses_small by the (integer) variables code and heat. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+myURL <-
+  "http://sites.msudenver.edu/ngrevsta/wp-content/uploads/sites/416/2021/02/houses-for-sale.txt"
+Houses <- read.csv(myURL, header = TRUE, sep = "\t")
+Houses_small <- select(Houses, fuel, heat, sewer, construction)
+myURL <-
+  "http://sites.msudenver.edu/ngrevsta/wp-content/uploads/sites/416/2021/02/house_codes.txt"
+Translations <- read.csv(myURL,
+                         header = TRUE,
+                         stringsAsFactors = FALSE,
+                         sep = "\t")
+Codes <- Translations %>% pivot_wider(
+  names_from = system_type,
+  values_from = meaning,
+  values_fill = list(meaning = "invalid")
+)
+
+Houses_new_small <-
+                   Houses_small %>% 
+                   left_join(Codes %>% 
+                   select(code, heat_type), 
+                   by = c(heat = "code"))
+head(Houses_new_small)
+```
+
+### Exercise 10: Write one or more commands using mutate() and either as.numeric() or parse_number() that convert the NumberChildren column of x to numeric. Check your answer using str(). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+x <- data.frame(
+  Name = c("Joe", "Lucy", "Tom", "Sally"),
+  NumberChildren = c("2", "1", "0", "3"),
+  stringsAsFactors = FALSE
+)
+str(x)
+
+x <- mutate(.data = x, y = as.numeric(NumberChildren))
+x
+```
+
+### Exercise 11: What happens to the value in the 2nd position of NumberChildren when you type the following:
+\
+Code:
+```{r include = TRUE}
+x <- data.frame(
+  Name = c("Joe", "Lucy", "Tom", "Sally"),
+  NumberChildren = c("2", "Unknown", "0", "3"),
+  stringsAsFactors = FALSE
+)
+
+x <- mutate(x, NumberChildren = as.numeric(NumberChildren))
+x
+```
+The value in the second position will trn into an NA value.
+\newpage
+
+### Exercise 12: Guess what each of the following commands returns, then check your answers.
+\
+Code:
+```{r include = TRUE}
+library(lubridate)
+```
+
+#### a) mdy("Dec 18, 1973")
+\
+Code: 
+```{r include = TRUE}
+mdy("Dec 18, 1973")
+```
+This will print in the format year-month-day as a numeric version. 
+
+#### b) mdy("December 18, 1973")
+\
+Code: 
+```{r include = TRUE}
+mdy("December 18, 1973")
+```
+This will print the same thing as *part a*.
+
+#### c) mdy("12/18/1973")
+\
+Code: 
+```{r include = TRUE}
+mdy("12/18/1973")
+```
+This will do the same as *part a*.
+
+#### d) mdy("12/18/73")
+\
+Code: 
+```{r include = TRUE}
+mdy("12/18/73")
+```
+This will do the same as *part a*.
+
+#### e) mdy("12-18-1973")
+\
+Code: 
+```{r include = TRUE}
+mdy("12-18-1973")
+```
+This will do the same as *part a*.
+
+#### f) mdy("12-18-73")
+\
+Code: 
+```{r include = TRUE}
+mdy("12-18-73")
+```
+This will do the same as *part a*.
+
+### Exercise 13: Does mdy() interpret "11/14/23" as referring to the year 2023 or 1923? Try it.
+\
+Code:
+```{r include = TRUE}
+mdy("11/14/23")
+```
+This will assume 2023 is the year.
+
+### Exercise 14: How many elapsed days are there between January 15, 2007 ("1/15/07") and October 4, 2019 ("10/4/19")?
+\
+Code:
+```{r include = TRUE}
+days1 <-
+  seq(
+    from = mdy("1/15/2007"),
+    to = mdy("10/4/2019"),
+    by = "days"
+  )
+length(days1)
+```
+There should be 4646 days between the days mentioned above. 
+
+### Exercise 15: Guess what the following do.
+#### a) seq(from = mdy("12-20-1993"), to = mdy("01-15-2004"), by = "days")
+\
+Code:
+```{r include = TRUE}
+head(seq(
+  from = mdy("12-20-1993"),
+  to = mdy("01-15-2004"),
+  by = "days"
+))
+```
+This will display all the days between 12-20-1993 and 01-15-2004.
+
+#### b) seq(from = mdy("12-20-1993"), to = mdy("01-15-2004"), by = "weeks")
+\
+Code:
+```{r include = TRUE}
+head(seq(
+  from = mdy("12-20-1993"),
+  to = mdy("01-15-2004"),
+  by = "weeks"
+))
+```
+This will show every 7 days starting 12-20-1993 til 01-15-2004.
+
+#### c) seq(from = mdy("12-20-1993"), to = mdy("01-15-2004"), by = "years")
+\
+Code:
+```{r include = TRUE}
+seq(
+  from = mdy("12-20-1993"),
+  to = mdy("01-15-2004"),
+  by = "years"
+)
+```
+This will show the yearly date starting at 12-20-1993. 
+\newpage
+
+### Exercise 16: Do the following.
+\
+Code:
+```{r include = TRUE}
+my.data <-
+  data.frame(
+    Date = c(
+      "12/28/2017",
+      "12/29/2017",
+      "12/30/2017",
+      "12/31/2017",
+      "1/1/2018",
+      "1/2/2018",
+      "1/3/2018"
+    ),
+    Y = c(44, 43, 47, 53, 53, 55, 56)
+  )
+```
+
+#### a) Why doesn't the code below work?
+\
+Code:
+```{r include = TRUE}
+library(ggplot2)
+ggplot(data = my.data, mapping = aes(x = Date, y = Y)) +
+  geom_line()
+```
+This code doesn't work because geom_line() only registers having one observation, the Y variable. The Date object doesn't work because it isn't considered something other than a character or numeric value. 
+\newpage
+
+#### b) How can you use mutate() (from the "dplyr" package) and mdy() to fix the problem? Do it and report your R commands. 
+\
+Code:
+```{r include = TRUE}
+my.data$Date <- mdy(my.data$Date)
+
+ggplot(data = my.data, mapping = aes(Date, Y)) +
+  geom_line(size = 1)
+
+
+```
+\newpage
+
+## Section 7.1 Exercises
+
+### Exercise 17: Guess how many times "Good Sport" will be printed to the screen in the following set of commands. Then check your answer.
+\
+Code:
+```{r include = TRUE}
+for (i in 1:5) {
+  print("Good Sport")
+}
+```
+The above code will print "Good Sport" 5 times. 
+
+### Exercise 18: The sequence of values we iterate over doesn’t have to be of the form 1:n. Guess what will be printed to the screen in the following set of commands. Then check your answer.
+\
+Code:
+```{r include = TRUE}
+x <- c(2, 4, 6, 8)
+
+for(i in x) {
+  print(i^2)
+}
+```
+This is what will show on the console, "4, 16, 36, 64". 
+
+### Exercise 19: Do the following.
+\
+Code: 
+```{r include = TRUE}
+sum.sq <- 0
+
+for(i in 1:10) {
+  sum.sq <- sum.sq + i^2
+}
+
+sum.sq
+```
+
+#### a) Why is it necessary to make the assignment sum.sq <- 0 before entering the loop? What would happen if sum.sq <- 0 wasn’t there? Try it (after removing sum.sq from your Workspace if it’s there).
+\
+The statement sum.sq needs to be initialized because it is on the right side of the statement which is evaluated first so if its not there the computer doesn't know the variable sum.sq. 
+\
+Code:
+```{r include = TRUE}
+#rm(sum.sq)
+
+#for (i in 1:10) {
+#  sum.sq <- sum.sq + i^2
+#}
+
+#sum.sq
+```
+The statement return an error, "Error in sum.sq : object 'sum.sq' not found".
+
+#### b) What would happen if sum.sq <- 0 was mistakenly placed inside the loop? Try it:
+\
+Code:
+```{r include = TRUE}
+for (i in 1:10) {
+  sum.sq <- 0
+  sum.sq <- sum.sq + i^2
+}
+
+sum.sq
+```
+The following will print out 10^2 which is 100. 
+
+### Exercise 20: Do the following.
+
+#### a) What does the following loop do?
+Code:
+```{r include = TRUE}
+num.sq <- rep(NA, 10)
+
+for (i in 1:10) {
+  num.sq[i] <- i^2
+}
+
+num.sq
+```
+The above will show a vector containing the squares of each value for i. 
+\newpage
+
+#### b) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+num.sq <- (1:10)^2
+num.sq
+```
+The above code will print a vector containing the squares of numbers 1:10. 
+
+### Exercise 21: Using the sleepstudy data (from the "lme4" package), use mutate() with nest_by() and lm() to fit lines separately to each Subject, with Days as the x variable and Response as the y variable by typing:
+\
+Code:
+```{r include = TRUE}
+library(lme4) # Contains the sleepstudy data set.
+by_subject <- nest_by(.data = sleepstudy, Subject)
+models <-
+  mutate(.data = by_subject, mod = list(lm(Reaction ~ Days, data = data)))
+head(models)
+```
+\newpage
+What’s the equation of the fitted line for Subject 371 (the 17th subject in the study)?
+\
+```{r}
+models$mod[[17]]
+```
+The equation is __y = 9.188X + 253.636__. 
+
+
+
+
+

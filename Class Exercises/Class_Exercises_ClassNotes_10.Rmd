@@ -1,0 +1,686 @@
+---
+title: "Class Notes 10"
+author: "Tobias Boggess"
+date: "4/13/2022"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r include = FALSE}
+library(DBI)
+library(RMySQL)
+library(dplyr)
+library(RSQLite)
+library(dbplyr)
+library(tidyr)
+```
+
+## Section 15.2 Exercises
+
+### Exercise 1: Now open a connection to the airlines database using the command involving dbConnect() (from "DBI") given above. Save the connection as, say, db_con
+\
+Setup:
+```{r include = TRUE}
+db_con <- dbConnect(drv = MySQL(),
+                    dbname = "airlines",
+                    host = "mdsr.cdc7tgkkqd0n.us-east-1.rds.amazonaws.com",
+                    user = "mdsr_public",
+                    password = "ImhsmflMDSwR")
+```
+
+#### a) What is the class of the object db_con? Use class().
+\
+Code:
+```{r include = TRUE}
+class(db_con)
+```
+The class is labelled above. 
+
+#### b) How many tables are in the airlines database and what are their name? Use dbListTables().
+\
+Code:
+```{r include = TRUE}
+dbListTables(db_con)
+```
+There are four tables in the airlines database and the names are reported above.
+
+#### c) Recall that DESCRIBE is used to get a description of the contents of a table. Using dbGetQuery(), with statement = "DESCRIBE airports;", how many variables (”fields”) are in the airports table?
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "DESCRIBE airports")
+```
+There are 8/9 variables in the table given the city and country is split up when the above command is run. 
+
+#### d) Using dbGetQuery(), with statement = "DESCRIBE flights;", how many variables (”fields”) are in the flights table?
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, statement = "DESCRIBE flights")
+```
+According to the above command there are 10 variables. 
+
+## Section 15.3 Exercises
+
+### Exercise 2: Use dbGetQuery() with SELECT and FROM to query the flights table to retrieve just the carrier and tailnum variables (columns). Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con, 
+           statement = "SELECT carrier, tailnum, year FROM flights 
+           LIMIT 0, 5;")
+```
+
+### Exercise 3: Now use dbGetQuery() with SELECT and FROM to query the carriers table to retrieve all the variables (columns). Do the following.
+\
+Setup:
+```{r include = TRUE}
+my.carriers <- dbGetQuery(db_con, 
+           statement = "SELECT * FROM carriers
+           LIMIT 0, 5;")
+my.carriers
+```
+
+#### a) Confirm that the data set returned by dbGetQuery() is a data frame by typing:
+\
+Code:
+```{r include = TRUE}
+is.data.frame(my.carriers)
+```
+\newpage
+
+#### b) You can find out how much memory an object occupies in R using the object.size() function and its print() method.How much memory does my.carriers occupy? Find out by typing:
+\
+Code:
+```{r include = TRUE}
+print(object.size(my.carriers), units = "Kb")
+
+print(object.size(my.carriers), units = "Mb")
+```
+
+### Exercise 4: Now use dbGetQuery() with SELECT and FROM to form a query to retrieve all the variables (columns) from the airports table. Save the data returned as, say, my.airports in R.
+\
+Data frame:
+```{r include = TRUE}
+my.airports <- dbGetQuery(conn = db_con, 
+           statement = "SELECT * FROM airports")
+```
+
+#### a) Each observation (row) in the my.airports data frame is an airport. How many rows does the data frame have? Use str() or nrow() or dim().
+\
+Code:
+```{r include = TRUE}
+nrow(my.airports)
+```
+There are 1,458 rows in the airport data frame. 
+
+#### b) How many columns (variables) does the data frame have?
+\
+Code:
+```{r include = TRUE}
+ncol(my.airports)
+```
+There are 9 variables in the data frame.
+
+### Exercise 5: Recall that we can use dbGetQuery() with SELECT and FROM to form and select new columns from existing ones in a table, similar to using mutate() in "dplyr". Form a new column containing the travel speeds (in mph) of the flights (distance divided by air_time, then multiplied by 60), using AS to give it the name trvl_speed.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT *, 
+           (distance / air_time) * 60 AS trvl_speed
+           FROM flights
+           LIMIT 0,10;")
+```
+
+## Section 15.4 Exercises
+
+### Exercise 6: Report R command(s) (or just the SQL statements) involving dbGetQuery() and the logical operators (AND, OR, and NOT) with the flights table to retrieve flights meeting the following conditions.
+\
+
+#### a) Had an arrival delay of more than hours (arr_delay more than 120 minutes).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT * 
+                        FROM flights
+                        WHERE arr_time > 120
+                        LIMIT 0,10;")
+```
+
+#### b) Flew to Houston (i.e. had a dest of IAH or HOU).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT * 
+                        FROM flights
+                        WHERE dest = 'IAH' OR dest = 'HOU'
+                        LIMIT 0,10;")
+```
+
+#### c) Were operated by United, American, or Delta (i.e. had a carrier of UA, AA, or DL).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT * 
+                        FROM flights
+                        WHERE carrier = 'UA' OR 
+                        carrier = 'AA' OR
+                        carrier = 'DL'
+                        LIMIT 0,10;")
+```
+
+#### d) Departed in summer (July, August, or September, i.e. month 7, 8, or 9).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT * 
+                        FROM flights
+                        WHERE month IN (7, 8, 9)
+                        LIMIT 0,10;")
+```
+
+#### e) Departed between midnight and 6:00 AM, inclusive (dep_time at 2400 or between 0 and 600, inclusive).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con,
+           statement = "SELECT * FROM flights
+           WHERE dep_time = 2400 OR
+           dep_time BETWEEN 0 AND 600
+           LIMIT 0,10;")
+```
+
+#### f) Were operated by United (carrier UA), departed in July (month 7), and had an arrival delay of more than two hours (arr_delay more than 120 minutes).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT * FROM flights
+           WHERE carrier = 'UA' AND
+           month = 7 AND
+           arr_delay > 120
+           LIMIT 0,10;")
+```
+
+## Section 15.5 Exercises
+
+### Exercise 7: We know there were 65 flights that left Bradley Airport on June 26th, 2013, but what was the shortest departure delay for each airline carrier? What was the longest?
+
+#### a) Use dbGetQuery() with GROUP BY and MIN() to retrieve the shortest departure delay for each carrier. Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con, 
+           statement = "SELECT carrier, MIN(dep_delay) 
+           AS min_dep_delay
+           FROM flights
+           WHERE origin = 'BDL' AND month = 6 AND day = 26 AND year = 2013
+           GROUP BY carrier
+           LIMIT 0,10;")
+```
+
+#### b) GROUP BY can summarize more than one variable at a time. Modify your command(s) from part a to use MIN() and MAX() to retrieve the shortest and longest departure delays for each carrier. Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(db_con,
+           statement = 
+           "SELECT carrier, MIN(dep_delay) AS min_dep_delay, 
+           MAX(dep_delay) AS max_dep_delay
+           FROM flights 
+           WHERE origin = 'BDL'AND year = 2013 AND month = 6 AND day = 26
+           GROUP BY carrier
+           LIMIT 0,6;") 
+```
+
+### Exercise 8: This problem concerns the GROUP BY and AVG() functions. It uses the flights table.
+
+#### a) Explain in words what the following command does (recall that dest is the destination of the flight):
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT carrier, dest, AVG(arr_delay) AS meanArrDelay
+FROM flights
+WHERE year = 2013 AND month = 6 AND day = 26 AND origin = 'BDL'
+GROUP BY dest;"
+)
+```
+This command will show the carriers, destinations, and average arrival delay from the flights data set that happened on June 26 of 2013 from the BDL airport and group them based on the destination airport. 
+
+#### b) Recall that GROUP BY can summarize more than one variable at a time. Explain in words what the following command does:
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT carrier, dest, AVG(arr_delay) AS meanArrDelay,
+AVG(distance) AS meanDist
+FROM flights
+WHERE year = 2013 AND month = 6 AND day = 26 AND origin = 'BDL'
+GROUP BY dest;"
+)
+```
+This command will show the carrier, destination, average arrival delay, and average distance from the flights dataset on June 26, 2013 at the BDL airport and group them by the destination. 
+
+## Section 15.6 Exercises
+
+### Exercise 9: This problem concerns ORDER BY combined with GROUP BY and AVG(). It uses the flights table. There were 22,258 flights that left Bradley Airport in the year 2013.
+
+#### a) Use GROUP BY with AVG() and ORDER BY to determine the destination dest for which the average travel time (air_time) from Bradley Airport was shortest in 2013. Report the (abbreviated) destination (dest) name.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(con = db_con,
+           statement = "SELECT dest, AVG(air_time) AS avg_air_time
+           FROM flights
+           WHERE origin = 'BDL' AND year = 2013
+           GROUP BY dest
+           ORDER BY avg_air_time ASC
+           LIMIT 0,6;")
+
+```
+
+#### b) Now use GROUP BY with AVG() and ORDER BY to determine the destination dest for which the average travel time (air_time) from Bradley Airport was longest in 2013. Report the (abbreviated) destination (dest) name.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(con = db_con,
+           statement = "SELECT dest, AVG(air_time) AS avg_air_time
+           FROM flights
+           WHERE origin = 'BDL' AND year = 2013
+           GROUP BY dest
+           ORDER BY avg_air_time DESC
+           LIMIT 0,6;")
+```
+
+### Exercise 10: This problem concerns ORDER BY combined with GROUP BY and COUNT(). It uses the flights table. There were 22,258 flights that left Bradley Airport in the year 2013.
+
+#### a) Use GROUP BY with COUNT() and ORDER BY to determine to determine which dest (i.e. which destination) was flown to the most times out of Bradley Airport in 2013. Report the (abbreviated) destination (dest) name.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(con = db_con,
+           statement = "SELECT dest, COUNT(*) AS numFlights
+           FROM flights
+           WHERE year = 2013 AND origin = 'BDL'
+           GROUP BY dest
+           ORDER BY numFlights DESC
+           LIMIT 0,6;")
+```
+
+#### b) Use GROUP BY with COUNT() and ORDER BY to determine which tailnum (i.e. which individual airplane) flew the most times out of Bradley Airport in 2013. Report the tailnum value of the airplane.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(con = db_con,
+           statement = "SELECT tailnum, COUNT(*) AS numFlights
+           FROM flights
+           WHERE year = 2013 AND origin = 'BDL'
+           GROUP BY tailnum
+           ORDER BY numFlights DESC
+           LIMIT 0,6;")
+```
+
+## Sectiion 15.7 Exercises
+
+### Exercise 11: There were 22,258 flights that left Bradley Airport in the year 2013. There were 25 destinations of those flights from Bradley:
+\
+Setup:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT dest, COUNT(*) AS numFlights,
+AVG(arr_delay) AS avg_arr_delay
+FROM flights
+WHERE year = 2013 AND origin = 'BDL'
+GROUP BY dest;"
+)
+```
+
+#### a) Alter the command above using HAVING so that it only returns destinations for which the average arrival delay is positive (avg_arr_delay > 0).Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT dest, COUNT(*) AS numFlights,
+AVG(arr_delay) AS avg_arr_delay
+FROM flights
+WHERE year = 2013 AND origin = 'BDL'
+GROUP BY dest
+HAVING avg_arr_delay > 0;"
+)
+```
+
+#### b) Now alter your command from part a so that it only returns destinations for which the average arrival delay is positive (avg_arr_delay > 0) and the total number of flights was more than 1,000 (numFlights > 1000). Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT dest, COUNT(*) AS numFlights,
+AVG(arr_delay) AS avg_arr_delay
+FROM flights
+WHERE year = 2013 AND origin = 'BDL'
+GROUP BY dest
+HAVING avg_arr_delay > 0 AND numFlights > 1000;"
+)
+```
+
+### Exercise 12: There were 22,258 flights that left Bradley Airport in the year 2013. Those flights from Bradley were made by 12 airline carriers. Use dbGetQuery() with SELECT, FROM, WHERE, GROUP BY, and HAVING to query the flights table to do the following. Report your R command(s) (or just your SQL statement).
+
+1. Group the flights from Bradley in 2013 by airline carrier (carrier).
+
+2. Find the average departure delay for each carrier (use AVG() with dep_delay).
+
+3. Retrieve just the carriers whose average departure delays were longer than 10 minutes.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "SELECT carrier, AVG(dep_delay) AS avg_dep_delay
+           FROM flights
+           WHERE origin = 'BDL' and year = 2013
+           GROUP BY carrier
+           HAVING avg_dep_delay > 10;")
+```
+
+## Section 15.8 Exercises
+
+### Exercise 13: How would you modify the query below so that it returns instead the 6th-9th flight destinations?
+\
+Original Query:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT dest, COUNT(*) AS numFlights, AVG(arr_delay) AS avg_arr_delay
+FROM flights
+WHERE year = 2013 AND origin = 'BDL'
+GROUP BY dest
+HAVING numFlights > 365 * 2
+ORDER BY avg_arr_delay ASC
+LIMIT 3, 4;"
+)
+```
+
+Modified Query:
+```{r include = TRUE}
+dbGetQuery(
+  conn = db_con,
+  statement = "SELECT dest, COUNT(*) AS numFlights, AVG(arr_delay) AS avg_arr_delay
+FROM flights
+WHERE year = 2013 AND origin = 'BDL'
+GROUP BY dest
+HAVING numFlights > 365 * 2
+ORDER BY avg_arr_delay ASC
+LIMIT 5, 4;"
+)
+```
+
+## Section 15.9 Exercises
+
+### Exercise 14: This exercise involves a JOIN clause. There were 65 flights that left Bradley Airport on June 26th, 2013. For this query, you’ll need to join the airports table onto the flights table, matching the destination airport code (dest column) of flights to the airport code (faa column) in airports. You’ll also need to see the destinations, flight numbers, and airline carrier codes (dest, flight, and carrier columns) from the flights table and the full airport names (name column) from the airports table in the result set. Use dbGetQuery() to answer the following problem. List the full name of the destination airport of flight EV 4714 from from Bradley on June 26th, 2013.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "SELECT carrier, dest, flight, airports.name
+           FROM flights
+           JOIN airports ON flights.dest = airports.faa
+           WHERE origin = 'BDL' AND year = 2013 AND month = 6 AND day = 26
+           HAVING carrier = 'EV' AND flight = 4714;")
+```
+
+### Exercise 15: This exercise involves a JOIN clause.There were 65 flights that left Bradley Airport on June 26th, 2013. For this query, you’ll need to join the carriers table onto the flights table, matching the airline carrier code (carrier column) of flights to the carrier code (carrier column) in carriers. You’ll also need to see the destinations and flight numbers and (dest and flight columns) from the flights table and the full carrier names (name column) from the carriers table in the result set. Use dbGetQuery() to answer the following problems.
+
+#### a) List the full airline carrier name and flight number for all flights between Bradley Airport (BDL) and MSP on June 26th, 2013.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "SELECT origin, dest, flight, flights.carrier, carriers.name
+           FROM flights
+           JOIN carriers ON flights.carrier = carriers.carrier
+           WHERE year = 2013 AND month = 6 AND day = 26 AND origin = 'BDL'
+           HAVING dest = 'MSP';")
+```
+
+
+#### b) List the destination airport codes and flight numbers for the three flights from Bradley made by Mesa Airlines Inc. on June 26th, 2013.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "SELECT origin, dest, flight, flights.carrier, carriers.name AS name
+           FROM flights
+           JOIN carriers ON flights.carrier = carriers.carrier
+           WHERE year = 2013 AND month = 6 AND day = 26 AND origin = 'BDL'
+           HAVING name = 'Mesa Airlines Inc.';")
+```
+
+### Exercise 16: This exercise concerns LEFT JOIN. There were 50 flights that left Palm Beach International Airport (’PBI’) on June 26th, 2013. Explain in words why, below, LEFT JOIN returns all 50 flights (with NA as one of the destination airport names), but JOIN only returns 49.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "SELECT origin, dest, 
+           name AS dest_name, flight, carrier
+           FROM flights
+           LEFT JOIN airports ON flights.dest = airports.faa
+           WHERE year = 2013 AND month = 6 AND 
+           day = 26 AND origin = 'PBI';")
+
+dbGetQuery(conn = db_con,
+           statement = "SELECT origin, dest, 
+           name AS dest_name, flight, carrier
+           FROM flights
+           JOIN airports ON flights.dest = airports.faa
+           WHERE year = 2013 AND month = 6 AND 
+           day = 26 AND origin = 'PBI';")
+```
+
+Left join will include all 50 flights because the left join function shows all the flights in the flights destination airports. Join will only show rows that are the same based on destination airport and the faa code for the airports dataset.
+
+## Section 15.10 Exercises
+
+### Exercise 17: This exercise concerns the use of UNION. Describe in words which sets of flights will be combined to comprise the result set of the following query, then check your answer.
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con,
+           statement = "(SELECT year, month, day, origin, 
+           dest, flight, carrier
+           FROM flights
+           WHERE year = 2013 AND month = 6 AND day = 26
+           AND origin = 'BDL' AND dest = 'ORD')
+           UNION
+           (SELECT year, month, day, origin, dest, 
+           flight, carrier
+           FROM flights
+           WHERE year = 2013 AND month = 6 AND day = 26
+           AND origin = 'MSP' AND dest = 'JFK');")
+```
+The command above will combine rows from the year 2013, month of June, and the 26th day from the flights dataset to include flights that occured from BDL to ORD and from MSP to JFK airports. Its similar to doing the dbGetQuery command twice but shortens it down to a single command. 
+
+## Section 15.11 Exercises
+
+### Exercise 18: In this section, we used a subquery to determine whether Bradley Airport had any flights to Alaska or Hawaii (time zone, tz, less than -8) in 2013. Did Bradley have any flights to airports in the Pacific time zone (tz less than -7) in 2013? If so, which airports (three-letter codes) in the Pacific time zone were the flights’ destinations?
+\
+Code:
+```{r include = TRUE}
+head(dbGetQuery(conn = db_con,
+           statement = "SELECT dest
+                        FROM flights
+                        WHERE year = 2013
+                          AND origin = 'BDL'
+                          AND dest IN
+                            (SELECT faa
+                             FROM airports
+                             WHERE tz < -7);"), 2)
+```
+The result from the command above shows the airports in the pacific time zone that left Bradley airport. Only LAX and LAS resulted from the above. 
+
+### Exercise 19:  In this section, we used a subquery to determine whether Bradley Airport had any flights to Alaska or Hawaii (time zone, tz, less than -8) in 2013. Did John F Kennedy Airport (JFK) have any flights to Alaska or Hawaii (time zone, tz, less than -8) in 2013? If so, which airport(s) (three-letter codes) in Alaska or Hawaii were the flights’ destinations?
+\
+Code:
+```{r include = TRUE}
+head(dbGetQuery(conn = db_con,
+           statement = "SELECT dest
+                        FROM flights
+                        WHERE year = 2013
+                          AND origin = 'JFK'
+                          AND dest IN
+                            (SELECT faa
+                             FROM airports
+                             WHERE tz < -8);"), 1)
+```
+The command above shows the airports flown to from JFK. The only airport flown from JFK to the pacific time zone was HNL which is Honolulu airport. It was flown to about 356 times in the year 2013. 
+
+## Section 15.12 Exercises
+
+### Exercise 20: In Exercise 2, SELECT and FROM were used to query the flights table to retrieve just the carrier and tailnum variables (columns). Write a command using "dplyr" that performs this same query. Do not use dbGetQuery(). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+flights <- tbl(db_con, "flights")
+carriers <- tbl(db_con, "carriers")
+
+my.query <- filter(.data = flights, year == 2013 & month == 6 & day == 6 & origin == "BDL")
+
+my.query.flights <- select(.data = flights, c(carrier, tailnum))
+
+# my.query.carriers <- select(.data = carriers, c(name, tailnum))
+
+head(my.query.flights, 5)
+
+# head(my.query.carriers)
+```
+
+### Exercise 21: Report R command(s) involving "dplyr" and the logical operators & (”and”), | (”or”), and ! (”not”) with the flights table to map to flights meeting the conditions:
+\
+
+* a) Had an arrival delay of more than hours (arr_delay more than 120 minutes).
+\
+Code:
+```{r include = TRUE}
+head(filter(.data = flights, arr_delay > 120), 5)
+```
+
+* b) Flew to Houston (i.e. had a dest of IAH or HOU).
+\
+Code
+```{r include = TRUE}
+head(filter(.data = flights, dest == 'IAH' | dest == 'HOU'), 5)
+```
+
+* c) Were operated by United, American, or Delta (i.e. had a carrier of UA, AA, or DL).
+\
+Code:
+```{r include = TRUE}
+head(filter(.data = flights, carrier == 'UA' | carrier == 'AA' | carrier == 'DL'), 5)
+```
+
+* d) Departed in summer (July, August, or September, i.e. month 7, 8, or 9).
+\
+Code:
+```{r include = TRUE}
+head(filter(.data = flights, month == 7 | month == 8 | month == 9), 5)
+```
+
+* e) Departed between midnight and 6:00 AM, inclusive (dep_time at 2400 or between 0 and 600,inclusive).
+\
+Code:
+```{r include = TRUE}
+head(filter(.data = flights, dep_time == 2400 | dep_time >= 0 & dep_time <= 600), 5)
+```
+
+* f) Were operated by United (carrier UA), departed in July (month 7), and had an arrival delay of more than two hours (arr_delay more than 120 minutes).
+\
+Code:
+```{r include = TRUE}
+head(filter(.data = flights, carrier == 'UA' & month == 7 & arr_delay > 120), 5)
+```
+
+## Section 15.13 Exercises
+
+### Exercise 22: Create an in-memory database, then add two tables, the who and population data frames.
+\
+Setup:
+```{r include = FALSE, echo=FALSE}
+db_con <- dbDisconnect(conn = db_con)
+```
+
+```{r include = TRUE}
+# Connect to the computer's memory using dbConnect():
+db_con <- dbConnect(drv = SQLite(),
+                    dbname = ":memory:")
+#Load the who table:
+dbWriteTable(conn = db_con,
+             name = "whoTable",
+             value = who)
+#Load the population table:
+dbWriteTable(conn = db_con,
+             name = "popTable",
+             value = population)
+```
+
+#### a) Now us dbGetQuery() with SELECT and FROM to query the who table to retrieve just the country, year, and new_sp_m014 variables (columns). Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+head(dbGetQuery(conn = db_con, 
+           statement = "SELECT country, year, 
+           new_sp_m014
+           FROM whoTable;"), 5)
+```
+
+#### b) Now modify your query from part a using a WHERE clause so that it only retrieves rows corresponding to the U.S. ("United States of America") more recently than 2009 (year >= 2010) . Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = db_con, 
+           statement = "SELECT country, year, 
+           new_sp_m014
+           FROM whoTable
+           WHERE country = 'United States of America' AND
+           year >= 2010;")
+```
+
+### Exercise 23: Use GROUP BY with AVG() and ORDER BY to determine the country for which the average number of new TB cases for the (new_sp_m014) group was lowest in the year 2013. Note: It’s okay if you end up with NAs. Report your R command(s) (or just your SQL statement).
+\
+Code:
+```{r include = TRUE}
+head(dbGetQuery(conn = db_con,
+                statement = "SELECT country, new_sp_m014,
+                AVG(new_sp_m014) AS avgNew_sp_m014
+                FROM whoTable
+                WHERE year = 2013
+                GROUP BY country
+                ORDER BY avgNew_sp_m014 ASC;"), 5)
+```
+
+```{r include = FALSE, echo=FALSE}
+db_con <- dbDisconnect(conn = db_con)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

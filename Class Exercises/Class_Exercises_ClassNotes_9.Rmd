@@ -1,0 +1,481 @@
+---
+title: "Class Notes 9"
+author: "Tobias Boggess"
+date: "4/6/2022"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r include = F, echo = F}
+library(tm)
+library(wordcloud)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+
+## Section 19.1 Exercises
+
+### Exercise 1:  paste() combines two (or more) character strings together into one character string. Try the following (taken from the paste() help page) and report the results:
+
+#### a) paste("Today's date is", date())
+```{r include = TRUE}
+paste("Today's date is", date())
+```
+
+#### b) paste("X", 1:5, sep = "")
+```{r include = TRUE}
+paste("X", 1:5, sep = "")
+```
+
+### Exercise 2: This exercise concerns paste() and it’s opposite, strsplit().
+
+#### a) paste() combines character strings. Consider the following three character strings.Write a command involving paste() that returns the single character string.
+\
+Code:
+```{r include = TRUE}
+first <- "Louis"
+middle <- "Daniel"
+last <- "Armstrong"
+
+paste(first, middle, last, sep = " ")
+```
+\newpage
+
+#### b) paste() is vectorized. Consider the following three "character" vectors. Write a command involving paste() that returns the single character string
+\
+Code:
+```{r include = TRUE}
+first <- c("Louis", "John", "Miles", "Ella")
+middle <- c("Daniel", "William", "Dewey", "Jane")
+last <- c("Armstrong", "Coltrane", "Davis", "Fitzgerald")
+
+paste(first, middle, last, sep = " ")
+```
+
+#### c) strsplit() does the opposite of paste() – it splits a character string. Consider the following character string. Write a command involving strsplit() that returns the three character strings
+\
+Code:
+```{r include = TRUE}
+full <- "Sarah Lois Vaughan"
+
+strsplit(full, split = " ")
+```
+
+#### d) strsplit() is vectorized. Consider the following "character" vector. Write a command involving strsplit() that returns the three vectors of character strings, Report your R command.
+\
+Code:
+```{r include = TRUE}
+full <-
+  c(
+    "Sarah Lois Vaughan",
+    "Thelonious Sphere Monk",
+    "Chet Henry Baker",
+    "Wynton Learson Marsalis"
+  )
+
+strsplit(full, split = " ")
+```
+
+### Exercise 3: Do the following.
+\
+Setup:
+```{r include = TRUE}
+quote <- "Aunt Petunia was horse-faced and bony; Dudley was blond, pink, and
+porky. Harry, on the other hand, was small and skinny, with brilliant green
+eyes and jet-black hair that was always untidy. He wore round glasses, and on
+his forehead was a thin, lightning-shaped scar."
+
+
+quote <- gsub(pattern = "\n",
+              replacement = " ",
+              x = quote)
+quote <- gsub(pattern = "[\\.,;]",
+              replacement = "",
+              x = quote)
+```
+
+#### a) gregexpr() searches a character string for a pattern. Search quote for hyphens (-) by running the following command. What do the three values returned by gregexpr(), 23, 156, and 256, represent?
+\
+Code:
+```{r include = TRUE}
+gregexpr(pattern = "-", text = quote)
+```
+
+The numbers represent where in the text the character '-' we are looking for is located. 
+
+#### b) regexpr() is another way to search a character string for a pattern. Run the following command.What does the one value returned by gregexpr(), 23, represent?
+\
+Code:
+```{r include = TRUE}
+regexpr(pattern  = "-", text = quote)
+```
+The 23 represents the first time in the string object quote that has the character '-'. 
+
+### Exercise 4: Do the following. 
+\
+Quote:
+```{r include = TRUE}
+badges <- "Badges? We ain't got no badges. We don't need no badges. I don't have to show you any stinking badges!"
+```
+
+#### a) Use tolower() to convert the quote to all lower case, overwriting the previous version of badges.
+\
+Code:
+```{r include = TRUE}
+badges <- tolower(badges)
+badges
+```
+
+#### b) We want to ”clean up” the quote a bit by removing the punctuation marks (periods, question mark, and exclamation marks). Use gsub(), with pattern = "!" and replacement = "", to remove the exclamation mark from badges, overwriting the previous version of badges. Report your R command.
+\
+Code:
+```{r include = TRUE}
+badges <- gsub(x = badges, pattern = "!", replacement = "")
+badges
+```
+
+#### c) Remove the question mark and periods, overwriting the previous version of badges.
+\
+Code:
+```{r include = TRUE}
+badges <- gsub(pattern = "\\?", replacement = "", x = badges)
+badges
+badges <- gsub(pattern = "\\.", replacement = "", x = badges)
+badges
+```
+
+#### d) Now use strsplit(), with split = " ", to split the badges quote into individual words, overwriting the previous version of badges.
+\
+Code:
+```{r include = TRUE}
+badges <- strsplit(x = badges, split = " ")
+badges
+```
+
+#### e) Note that strsplit() returned a list with one element, which is a "character" vector of words from the quote. Now use grep(), with pattern = "badges", to find the instances of the word "badges" in the quote. Then do the same thing, but using grepl(). Report your two R commands.
+\
+Code:
+```{r include = TRUE}
+badges <- badges[[1]]
+badges
+
+grep(pattern = "badges", x = badges)
+
+grepl(pattern = "badges", x = badges)
+```
+
+#### f) Now use nchar() to count the number of letters (characters actually) in each word. Report your R command.
+\
+Code:
+```{r include = TRUE}
+nchar(badges)
+```
+
+### Exercise 5: Do the following.
+\
+Setup:
+```{r include = TRUE}
+quote <- "I have a dream that one day this nation will rise up and live out
+the true meaning of its creed, 'We hold these truths to be self-evident,
+that all men are created equal.' I have a dream that one day on the
+red hills of Georgia, sons of former slaves and the sons of former
+slave owners will be able to sit down together at the table of
+brotherhood. I have a dream that one day even the state of Mississippi,
+a state sweltering with the heat of injustice, sweltering with the
+heat of oppression, will be transformed into an oasis of freedom and
+justice. I have a dream that my four little children will one day live
+in a nation where they will not be judged by the color of their skin
+but by the content of their character."
+
+quote <- gsub(pattern = "\n", replacement = " ", x = quote)
+quote <- gsub(pattern = "[\\.,']", replacement = "", x = quote)
+```
+
+#### a) Now use strsplit(), with split = " ", to split the quote into individual words, overwriting the previous version of quote.
+\
+Code:
+```{r include = TRUE}
+quote <- strsplit(quote, split = " ")
+quote
+```
+\newpage
+
+#### b) Note that strsplit() returned a list with one element, which is a "character" vector of words from the quote.Now use nchar() to obtain a vector, my.nchars, say, containing character counts for in the words of quote. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+quote <- quote[[1]]
+
+head(quote)
+length(quote)
+
+my.nchars <- nchar(quote)
+my.nchars
+```
+
+#### c) Use mean() to determine the mean number of characters of the words in quote. Report the value of the mean.
+\
+Code:
+```{r include = TRUE}
+mean.nchars <- mean(my.nchars)
+mean.nchars
+```
+\newpage
+
+#### d) Make a histogram of the numbers of characters of the words in quote. Describe the shape of the histogram (right skewed, left skewed, or symmetrical and bell-shaped).
+\
+Code:
+```{r include = TRUE}
+library(ggplot2)
+ggplot(data = data.frame(n = my.nchars)) +
+  geom_histogram(mapping = aes(x = n),
+                 fill = "blue",
+                 binwidth = 1)
+```
+The shape is a right skewed bell-shaped histogram. 
+\newpage
+
+## Section 19.2 Exercises
+
+### Exercise 6: Do the following.
+\
+Setup:
+```{r include = TRUE}
+quote <- "I have a dream that one day this nation will rise up and live out
+the true meaning of its creed, 'We hold these truths to be self-evident,
+that all men are created equal.' I have a dream that one day on the
+red hills of Georgia, sons of former slaves and the sons of former
+slave owners will be able to sit down together at the table of
+brotherhood. I have a dream that one day even the state of Mississippi,
+a state sweltering with the heat of injustice, sweltering with the
+heat of oppression, will be transformed into an oasis of freedom and
+justice. I have a dream that my four little children will one day live
+in a nation where they will not be judged by the color of their skin
+but by the content of their character."
+
+quote <- gsub(pattern = "\n", replacement = " ", x = quote)
+
+quote <- gsub(pattern = "[\\.,']", replacement = "", x = quote)
+
+quote
+```
+
+#### a) Use gregexpr() to determine the starting character position(s) of the word ”freedom” in the quote. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+gregexpr(pattern = "freedom", text = quote)
+```
+\newpage
+
+#### b)  strsplit() splits the elements of a "character" string into substrings according to matches of a character pattern (or regular expression) specified via the argument split, and returns a list with one element, a "character" vector of the substrings. Run the following commands, and report the results
+\
+Code:
+```{r include = TRUE}
+quote.list <- strsplit(quote, split = " ")
+quote.vec <-
+  unlist(quote.list) # Could also use quote.vec <- quote.list[[1]]
+quote.vec
+```
+\newpage
+
+#### c) grep() takes arguments pattern, a character pattern (or regular expression), and x, a "character" vector, and returns the indices of the elements of x that contain the pattern. Explain why the returned values of the following two commands differ:
+\
+Code:
+```{r include = TRUE}
+grep(pattern = "the", x = quote.vec)
+which(quote.vec == "the")
+```
+The command *grep(pattern = "the", x = quote.vec)* will find subsets of string that contain the word " __the__" and will return the location of that substring or string in the vector. The *which* command will show only the strings that are exactly the same as " __the__" but it wont find any words containing a subset of the word " __the__". 
+
+#### d) If we specify value = TRUE in grep(), character pattern (or regular expression) for pattern, and a "character" vector x, it returns the actual elements of x (not their indices) that contain the pattern. Explain in words what each of the following commands does
+\
+Code:
+```{r include = TRUE}
+grep(pattern = "ing$", x = quote.vec, value = TRUE)
+grep(pattern = "^th", x = quote.vec, value = TRUE)
+```
+
+The first command will return all the words that contain the ending "-ing". The second command will return all the words that contain words beginning with "th". 
+\newpage
+
+### Exercise 7: Do the following.
+\
+Setup:
+```{r include = TRUE}
+County1 <-
+  c(
+    "De Witt County",
+    "Lac qui Parle County",
+    "Lewis and Clark County",
+    "St John the Baptist Parish"
+  )
+County2 <-
+  c(
+    "De Witt County",
+    "Lac qui Parle County",
+    "Lewis and Clark County",
+    "St. John the Baptist Parish"
+  )
+County3 <-
+  c("De Witt", "Lac Qui Parle", "Lewis & Clark", "St. John the Baptist")
+```
+
+#### a) Find and eliminate the word ”County” from the County1 and County2 vectors. Consider using sub() or gsub(). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+County1_2 <- gsub(pattern = "Country", replacement = "", x = County1)
+County1_2
+
+County2_2 <- gsub(pattern = "County", replacement = "", x = County2)
+County2_2
+```
+
+#### b) Now find and eliminate the word ”Parish” from the County1 and County2 vectors. Use sub() or gsub(). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+County1_2 <- gsub(pattern = "Parish", replacement = "", x = County1_2)
+County1_2
+
+County2_2 <- gsub(pattern = "Parish", replacement = "", x = County2_2)
+County2_2
+```
+
+#### c) The words ”County” and ”Parish” both have six letters. So another way to eliminate those words from County1 and County2 would be to use nchar() to find the length of each character string and then substr() to keep all but the last 6 characters (or 7?). Verify that the following commands are another way to accomplish the tasks of parts a and b
+\
+Code:
+```{r include = TRUE}
+substr(x = County1, start = 1, stop = nchar(County1) - 7)
+substr(x = County2, start = 1, stop = nchar(County2) - 7)
+```
+
+#### d) Another way to eliminate ”County” and ”Parish” words from County1 and County2 would be to use the ”or” operator | in a regular expression.Verify that the following commands are another way to accomplish the tasks of parts a and b:
+\
+Code:
+```{r include = TRUE}
+gsub(pattern = " County| Parish",
+     replacement = "",
+     x = County1)
+gsub(pattern = " County| Parish",
+     replacement = "",
+     x = County2)
+```
+
+#### e) In part d, there was a blank before County and Parish. Why wouldn’t the following be appropriate?
+\
+Code:
+```{r include = TRUE}
+gsub(pattern = " County|Parish", replacement = "", x = County1)
+gsub(pattern = " County|Parish", replacement = "", x = County2)
+```
+The above wouldn't be appropriate because there is an extra space still in the quote before Parish and since there are spaces already in the text in the appropriate places, there would be double spaces where Parish would be. 
+
+#### f) Next we want to remove the period symbol in ”St.” from County2 and from County3. The regular expression "." matches any character. Why wouldn’t the following be appropriate? Try it.
+\
+Code:
+```{r include = TRUE}
+gsub(pattern = ".", replacement = "", x = County2)
+gsub(pattern = ".", replacement = "", x = County3)
+```
+This isn't appropriate because the '.' isn't getting removed from County 2 or County 3. The period on its own represents any character. So in the code above, we are essentially removing all letters in County2 and County3. 
+
+#### g) Write a command involving a regular expression with the escape character (\) to remove the period symbol in ”St.” from County2 and from County3. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+gsub(pattern = "\\.", replacement = "", x = County2)
+gsub(pattern = "\\.", replacement = "", x = County3)
+```
+\newpage
+
+#### h) Setting fixed = TRUE in gsub() applies literal pattern matching rather than treating the contents of pattern as metacharacters. Instead of using a regular expression with the escape character (\) to remove the period symbol in ”St.” from County1 and from County2, as in part g, rewrite the command from part f using fixed = TRUE in gsub() to accomplish the task. Report your R command.
+\
+Code:
+```{r include = TRUE}
+gsub(pattern = ".", replacement = "", x = County2, fixed = TRUE)
+gsub(pattern = ".", replacement = "", x = County3, fixed = TRUE)
+```
+
+### Exercise 8: What does the regular expression "<.*>" match in my.string above?
+\
+Setup:
+```{r include = TRUE}
+my.string <- "<p> This is a short paragraph.</p>"
+gregexpr(pattern = "<.*>", text = my.string)
+```
+
+The regular expression "<.*>" matches the first character expressed in the my.string object which is '<'. Since it considers the whole string to be a single value, it will detect there are 34 characters in the string. 
+\newpage
+
+## Section 19.5 Exercises
+
+### Exercise 9: Do the following.
+\
+Code:
+```{r include = TRUE}
+my.file <- file.choose()
+
+sotu.wrd.vec <- scan(my.file,
+                     what = "", 
+                     blank.lines.skip = TRUE)
+
+# This creates a single "character" string (one-element vector) containing all speeches.
+sotu.string <- paste(sotu.wrd.vec, collapse = " ")
+
+# This splits sotu.string into separate speeches (demarcated by ***):
+sotu.list <- strsplit(sotu.string, split = "\\*\\*\\*")
+
+# This converts the one-element sotu.list to a vector:
+sotu.spch.vec <- unlist(sotu.list) 
+# Could also use sotu.spch.vec <- sotu.list[[1]]
+
+# This removes the empty first element:
+sotu.spch.vec <- sotu.spch.vec[-1]
+
+# Create a "VectorSource" class object:
+sotu.vecsrc <- VectorSource(sotu.spch.vec)
+
+# Convert to a "Corpus" class object:
+sotu.corp <- VCorpus(sotu.vecsrc)
+
+# This cleans the speeches:
+sotu.corp <- sotu.corp %>%
+  tm_map(FUN = stripWhitespace) %>%
+  tm_map(FUN = removeNumbers) %>%
+  tm_map(FUN = removePunctuation) %>%
+  tm_map(FUN = content_transformer(tolower)) %>%
+  tm_map(FUN = removeWords, stopwords("english"))
+
+dtm <- DocumentTermMatrix(sotu.corp)
+```
+\newpage
+
+#### a) Which words were used 3,000 or more times in the speeches?
+\
+Code:
+```{r include = TRUE}
+findFreqTerms(dtm, lowfreq = 3000)
+
+dtm %>% as.matrix() %>% apply(MARGIN = 2, sum) %>% sort(decreasing = TRUE) %>% head(n = 15)
+```
+
+#### b)  With which five words does the word "peace" tend to appear most often in the speeches (i.e. which five words’ frequencies are most correlated with "peace"’s frequencies?). What are the values of their correlations with "peace"?
+\
+Code:
+```{r include = TRUE}
+findAssocs(dtm, terms = "peace", corlimit = 0.5)
+```
+
+The five most common words correlated with "peace" are "war", "military", "army", "forces", and "contributions". The most correlated word with peace is war at 0.59 while the least of the top five words correlated to peace is contributions with 0.52. 
+
+
+
+
+
+
+

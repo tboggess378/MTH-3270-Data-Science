@@ -1,0 +1,724 @@
+---
+title: "Class_Exercises_ClassNotes_3"
+author: "Tobias Boggess"
+date: "2/14/2022"
+output: pdf_document
+---
+## Section 4.2 Exercises
+
+### Exercise 1: Show the following
+
+#### a) select(.data = flights, year, day)
+\
+Results:
+```{r include = TRUE}
+library(nycflights13)
+library(dplyr)
+library(ggplot2)
+select(.data = flights, year, day)
+```
+\
+My guess: Will return the data from columns year and day.
+\newpage
+
+#### b) select(.data = flights, year:day)
+\
+Results:
+```{r include = TRUE}
+select(.data = flights, year:day)
+```
+\
+My Guess: This will return all columns from year to day.
+
+#### c) select(.data = flights, -(year:day))
+\
+Results
+```{r include = TRUE}
+select(.data = flights, -(year:day))
+```
+\
+My Guess: All columns will be shown except the ones from year to day.
+\newpage
+
+### Exercise 2: Guess and check.
+\
+Code:
+```{r include = TRUE}
+names(flights)
+```
+
+#### a) select(.data = flights, starts_with("sched"))
+\
+Results:
+```{r include = TRUE}
+select(.data = flights, starts_with("sched"))
+```
+\
+My Guess: This will show columns that have a header matching "sched".
+\newpage
+
+#### b) select(.data = flights, contains("arr"))
+\
+Results:
+```{r include = TRUE}
+select(.data = flights, contains("arr"))
+```
+\
+My Guess: This will show columns containing the string "arr". 
+
+#### c) select(.data = flights, starts_with("dep_"), starts_with("arr_"))
+\
+Results:
+```{r include = TRUE}
+select(.data = flights, starts_with("dep_"), starts_with("arr_"))
+```
+\
+My Guess: This will show all the columns that start with "dep_" or "arr_". 
+\newpage
+
+## Section 4.4 Exercises
+
+### Exercise 3: Report R commands that use filter() and the logical operators (’&’, ’|’, and ’!’) with the flights data to find all flights that:
+
+* a) Had an arrival delay of two or more hours.
+* b) Flew to Houston (IAH or HOU).
+* c) Were operated by United, American, or Delta.
+* d) Departed in summer (July, August, or September).
+* e) Departed between midnight and 6:00 AM (inclusive).
+* f) Were operated by United, departed in July, and had an arrival delay of two or more hours.
+\
+Code:
+```{r include = TRUE}
+filter(.data = flights, arr_delay >= 120)
+filter(.data = flights, dest == "IAH" | dest == "HOU")
+filter(.data = flights,
+       carrier == "UA" |
+         carrier == "AA" | carrier == "DL")
+filter(.data = flights, month == 7 | month == 8 | month == 9)
+```
+\newpage
+```{r include = TRUE}
+filter(.data = flights, dep_time == 2400 | dep_time <= 600)
+filter(.data = flights, carrier == "UA" &
+         month == 7 & arr_delay >= 120)
+```
+\newpage
+
+## Section 4.5 Exercises
+
+### Exercise 4: Report R commands that use arrange() to sort the flights data to:
+
+* a) Find the flights that had the shortest delays.
+* b) Find the flights that had the longest delays.
+* c) Find the flights that had the earliest departure times.
+* d) Find the flights that had the latest departure times.
+* e) Find the flights that traveled the shortest distance.
+* f) Find the flights that traveled the longest distance.
+\
+Code:
+```{r include = TRUE}
+arrange(.data = flights, dep_delay)
+arrange(.data = flights, desc(dep_delay))
+arrange(.data = flights, dep_time)
+arrange(.data = flights, desc(dep_time))
+```
+\newpage
+```{r include = TRUE}
+arrange(.data = flights, distance)
+arrange(.data = flights, desc(distance))
+```
+\newpage
+
+### Exercise 5: Do the following.
+\
+Given Data Frame:
+```{r include = TRUE}
+x <- data.frame(
+  x1 = c(2, 1, NA, 8, 7, 5, 4),
+  x2 = c("a", NA, "c", "d", "c", "a", "d"),
+  stringsAsFactors = FALSE
+)
+x
+```
+
+#### a) Guess what the following will do.
+\
+Code: 
+```{r include = TRUE}
+arrange(.data = x, is.na(x1))
+```
+\
+My Guess: This will arrange the results so na is at the bottom of the data frame.
+\newpage
+
+#### b) Guess what the following will do.
+\
+Code:
+```{r include = TRUE}
+arrange(.data = x, desc(is.na(x1)))
+```
+\
+My Guess: This will arrange all the values that are na at the top based on the x1 column. 
+
+## Section 4.6 Exercises
+
+### Exercise 6: Report an R command that uses mutate() or transmute(), with flights, to compute arr_time - dep_time, and compare it with air_time. Why are they different?
+\
+Code: 
+```{r include = TRUE}
+mutate(.data = flights, new_air_time = arr_time - dep_time)
+all(flights$air_time == flights$new_air_time)
+```
+\
+They are different and its because one uses hours and minutes and the other air_time variable is in minutes.
+
+### Exercise 7: Execute the code.
+\
+Code:
+```{r include = TRUE}
+flights_small <- select(.data = flights,
+                        year:day,
+                        ends_with("delay"),
+                        distance,
+                        air_time)
+mutate(
+  .data = flights_small,
+  gain = dep_delay - arr_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+```
+\
+The gain_per_hour does seem to get computed.
+\newpage
+
+## Section 4.7 Exercises
+
+### Exercise 8: Use rename() to change the names of the variables in z to new_z1, new_z2, and new_z3. Report your R command(s).
+\
+Code: 
+```{r include = TRUE}
+z <- data.frame(
+  z1 = c(5, 4, 3),
+  z2 = c("a", "c", "b"),
+  z3 = c(14, 22, 13)
+)
+new_z <- rename(
+  .data = z,
+  new_z1 = z1,
+  new_z2 = z2,
+  new_z3 = z3
+)
+z
+new_z
+```
+\newpage
+
+## Section 4.8 Exercises
+
+### Exercise 9: Create the not_cancelled data frame (using flights):
+\
+Code:
+```{r include = TRUE}
+not_cancelled <-
+  filter(.data=flights,
+         !is.na(dep_delay),
+         !is.na(arr_delay)
+         )
+```
+
+#### a) Use summarize() with median() to find the median departure delay and the median arrival delay. Report the two values.
+\
+Code:
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          med_dep_delay = median(dep_delay),
+          med_arr_delay = median(arr_delay))
+```
+
+#### b) Use summarize() with max() to find the longest departure delay and the longest arrival delay.Report the two values.
+\
+Code: 
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          long_dep_delay = max(dep_delay),
+          long_arr_delay = max(arr_delay))
+```
+\newpage
+
+#### c) Use summarize() with min() to find the shortest departure delay and the shortest arrival delay.Report the two values.
+\
+Code:
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          short_dep_delay = min(dep_delay),
+          short_arr_delay = min(arr_delay))
+```
+
+### Exercise 10: Answer the following.
+
+#### a) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          total_flights = n())
+```
+\
+This shows the total number of flights in the flights data set.
+
+#### b) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          hour_arr_delay_total = sum(arr_delay > 60))
+```
+\
+This will show the number of times the arrival delay was greater than an hour. 
+\newpage
+
+#### c) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+summarize(.data = not_cancelled,
+          hour_arr_delay_proportion = 
+            sum(arr_delay > 60) / n()
+          )
+```
+\
+This will show the proportion of times a flight was delayed by more than an hour by the number of flights.
+
+## Section 4.9 Exercises
+
+### Exercise 11: Do the following.
+
+#### a) Explain in words what the following commands do (recall that dest is the destination of the flight):
+\
+Code: 
+```{r include = TRUE}
+by_dest <- group_by(.data = flights, dest)
+delay_by_dest <- summarize(.data = by_dest,
+                           mean_arr_delay = mean(arr_delay, na.rm = TRUE))
+delay_by_dest
+```
+\
+The above code calculates the mean arrival delay of every destination airport flown to from New York. 
+\newpage
+
+#### b) summarize() can summarize more than one variable at a time. Explain in words what the following commands do:
+\
+Code:
+```{r include = TRUE}
+by_dest <- group_by(.data = flights, dest)
+delay_dist_by_dest <- summarize(
+  .data = by_dest,
+  mean_dist = mean(distance, na.rm = TRUE),
+  mean_arr_delay = mean(arr_delay, na.rm = TRUE)
+)
+delay_dist_by_dest
+```
+\
+Summarize can do more than one variable at a time. The output of them is the mean of the distance traveled between a New York airport and the destination airport. The second variable is the mean distribution of the arrival delay at each airport. 
+\newpage
+
+### Exercise 12: Do the following.
+\
+Code:
+```{r include = TRUE}
+resp <- c(23, 11, 14, 16, 19, 26, 24, 29, 31, 28, 34, 25)
+trt <- c(rep("Ctrl", 4), rep("TrtA", 4), rep("TrtB", 4))
+age <- c(33, 45, 30, 24, 22, 31, 39, 40, 29, 19, 27, 25)
+gndr <- c("m", "m", "f", "f", "m", "f", "f", "m", "f", "m", "f", "m")
+ExpData <- data.frame(
+  TrtGrp = trt,
+  SubjectGender = gndr,
+  SubjectAge = age,
+  Response = resp,
+  stringsAsFactors = FALSE
+)
+```
+
+#### a) Explain in words what the following commands do:
+\
+Code: 
+```{r include = TRUE}
+by_TrtGrp <- group_by(.data = ExpData, TrtGrp)
+summarize(.data = by_TrtGrp, Count = n())
+```
+\
+The command will show how many of each group there are.
+
+#### b) Use group_by() and summarize() to compute the mean Response by TrtGrp. Report the three
+mean Response values.
+\
+Code:
+```{r include = TRUE}
+TrtGroupBy <- group_by(.data = ExpData, TrtGrp)
+summarize(.data = TrtGroupBy, meanResponse = mean(Response, na.rm = TRUE))
+```
+
+#### c) Now use group_by() and summarize() to compute the mean Response and mean SubjectAge by TrtGrp. Report the three mean Response values and the three mean SubjectAge values.
+\
+Code:
+```{r include = TRUE}
+TrtGroupBy <- group_by(.data = ExpData, TrtGrp)
+summarize(
+  .data = TrtGroupBy,
+  meanResponse =
+    mean(Response, na.rm = TRUE),
+  meanSubjectAge = mean(SubjectAge, na.rm = TRUE)
+)
+```
+
+### Exercise 13: Do the following with the flights data set.
+
+#### a) Use group_by(), summarize() with n(), and arrange() to determine which tailnum (i.e. which individual airplane) flew the most times. Report the tailnum value of the airplane.
+\
+Code:
+```{r include = TRUE}
+tailNumGroup <- group_by(.data = flights, tailnum)
+mostTailNum <- summarize(.data = tailNumGroup, Count = n())
+arrange(.data = mostTailNum, desc(Count))
+```
+\newpage
+
+#### b) Use group_by(), summarize() with n(), and arrange() to determine which dest (i.e. which destination) was flown to the most times. Report the (abbreviated) destination name.
+\
+Code:
+```{r include = TRUE}
+destGroup <- group_by(.data = flights, dest)
+mostDestGroup <- summarize(.data = destGroup, Count = n())
+arrange(.data = mostDestGroup, desc(Count))
+```
+
+## Section 4.10 Exercises
+
+### Exercise 14: Do the following with the command below.
+\
+Code:
+```{r include = TRUE}
+x <- c(2, 5, 4, 3, 7, 9)
+```
+
+#### a) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+x %>% mean()
+mean(x)
+```
+\
+This is a way to apply x to the mean function.  
+\newpage
+
+#### b) What does the following command do?
+\
+Code:
+```{r include = TRUE}
+x %>% mean() %>% sqrt() %>% round(digits = 2)
+round(sqrt(mean(x)), digits = 2)
+```
+\
+This will pass x into the mean() function and from there the result will be passed to the square root function and the result of that will be passed to the round function. 
+
+#### c) Rewrite the following sequence of commands using the pipe operator.
+\
+Original Code:
+```{r include = TRUE}
+mean_x <- mean(x)
+sqrt_mean_x <- sqrt(mean_x)
+round_sqrt_mean_x <- round(sqrt_mean_x, digits = 2)
+round_sqrt_mean_x
+```
+\
+Modified Code:
+```{r include = TRUE}
+x %>% mean() %>% sqrt() %>% round(digits = 2)
+```
+
+#### d) Rewrite the following command using the pipe operator. Report your R command(s).
+\
+Original Code:
+```{r include = TRUE}
+round(sqrt(mean(x)), digits = 2)
+```
+\
+Modified Code:
+```{r include = TRUE}
+x %>% mean() %>% sqrt() %>% round(digits = 2)
+```
+\newpage
+
+### Exercise 15: Do the following.
+#### a) Rewrite the following command using the pipe operator.
+\
+Command:
+```{r include = TRUE}
+delay <- select(.data = flights, arr_delay)
+```
+\
+Pipe Operator version:
+```{r include = TRUE}
+flights %>% select(arr_delay)
+```
+
+#### b) Rewrite the following command using the pipe operator.
+\
+Original:
+```{r include = TRUE}
+dest_delay <- select(.data = flights, dest, arr_delay)
+```
+\
+Pipe Operator version:
+```{r include = TRUE}
+flights %>% select(dest, arr_delay)
+```
+
+#### c) Rewrite the following pair of commands using the pipe operator.
+\
+Original:
+```{r include = TRUE}
+dest_delay <- select(.data = flights, dest, arr_delay)
+sea_den <- filter(.data = dest_delay,
+                  dest == "SEA" | dest == "DEN")
+sea_den
+```
+\
+Pipe Operator version:
+```{r include = TRUE}
+flights %>% select(dest, arr_delay) %>% filter(dest == "SEA" | dest == "DEN")
+```
+\newpage
+
+#### d) Rewrite the following sequence of commands using the pipe operator.
+\
+Original:
+```{r include = TRUE}
+dest_delay <- select(.data = flights, dest, arr_delay)
+sea_den <- filter(.data = dest_delay,
+                  dest == "SEA" | dest == "DEN")
+by_dest <- group_by(sea_den, dest)
+delay_by_dest <- summarize(by_dest,
+                           mean_arr_delay = mean(arr_delay, na.rm = TRUE))
+delay_by_dest
+```
+\
+Pipe Operator Version:
+```{r include = TRUE}
+flights %>% select(dest, arr_delay) %>% filter(dest == "SEA" |
+                                                 dest == "DEN") %>% group_by(dest) %>%     summarize(mean_arr_delay = mean(arr_delay, na.rm = TRUE))
+```
+\newpage
+
+### Exercise 16: Rewrite the following command using the pipe operator.
+\
+Original Code:
+```{r include = TRUE}
+den_delays <- summarize(
+  filter(.data = flights,
+         dest == "DEN"),
+  mean_dep_delay = mean(dep_delay, na.rm = TRUE),
+  mean_arr_delay = mean(arr_delay, na.rm = TRUE)
+)
+den_delays
+```
+\
+Revised Code:
+```{r include = TRUE}
+flights %>% filter(dest == "DEN") %>% summarize(
+  mean_dep_delay = mean(dep_delay, na.rm = TRUE),
+  mean_arr_delay = mean(arr_delay, na.rm = TRUE)
+)
+```
+\newpage
+
+## Section 4.11 Exercises
+### Exercise 17: Do the following with the given data frames.
+\
+Data frames:
+```{r include = TRUE}
+df1 <- data.frame(Respondent_ID = c(1001, 1002, 1003),
+                  Q1_Response = c(55, 62, 39))
+df1
+
+df2 <- data.frame(
+  Respondent_ID = c(1002, 1003, 1004),
+  Q2_Response = c("yes", "no", "yes")
+)
+df2
+```
+
+#### a) Guess what the result of the following command will be, then check your answer and report the result.
+\
+Code:
+```{r include = TRUE}
+inner_join(x = df1, y = df2, by = "Respondent_ID")
+```
+\
+This code will display the matching rows in both data frames based on the Respondent ID. 
+\newpage
+
+#### b) Guess what the result of the following command will be, then check your answer and report the result.
+\
+Code:
+```{r include = TRUE}
+left_join(x = df1, y = df2, by = "Respondent_ID")
+```
+\
+This will show all the rows from the df1 data frame and include information about the Q2_response for al variables in df1. 
+
+#### c) Guess what the result of the following command will be, then check your answer and report the result.
+\
+Code:
+```{r include = TRUE}
+full_join(x = df1, y = df2, by = "Respondent_ID")
+```
+\
+This code will show all rows for both df1 and df2 even if df1 doesn't have anything for the column containing df2. 
+
+#### d) If we didn’t specify by = "Respondent_ID", by default what key variable would each of the *_join() functions use to match rows?
+\
+Code:
+```{r include = TRUE}
+full_join(x = df1, y = df2)
+```
+\
+The default is the first column of df1. 
+\newpage
+
+#### e) What would happen if Q1_Response and Q2_Response were both named Response in the two data frames, e.g.
+\
+Code:
+```{r include = TRUE}
+#df1 <- rename(.data = df1, Response = Q1_Response)
+#df2 <- rename(.data = df2, Response = Q2_Response)
+#full_join(x = df1, y = df2)
+```
+\
+This will result in an error "Joining, by = c("Respondent_ID", "Response")
+Error in `full_join()`:
+! Can't join on `x$Response` x `y$Response` because of incompatible
+  types.
+i `x$Response` is of type <double>>.
+i `y$Response` is of type <character>>.
+Backtrace:
+ 1. dplyr::full_join(x = df1, y = df2)
+ 2. dplyr:::full_join.data.frame(x = df1, y = df2)
+ Error in full_join(x = df1, y = df2) : 
+i `x$Response` is of type <double>>.
+i `y$Response` is of type <character>>.".
+\
+
+#### f) What would happen if, as in part e, Q1_Response and Q2_Response were both named Response, and we typed:
+\
+Code:
+```{r include = TRUE}
+#df1 <- rename(.data = df1, Response = Q1_Response)
+#df2 <- rename(.data = df2, Response = Q2_Response)
+#inner_join(x = df1, y = df2)
+```
+\
+This reports an error, "Error in `stop_subscript()`:
+! Can't rename columns that don't exist.
+x Column `Q1_Response` doesn't exist.
+Backtrace:
+  1. dplyr::rename(.data = df1, Response = Q1_Response)
+  2. dplyr:::rename.data.frame(.data = df1, Response = Q1_Response)
+  3. tidyselect::eval_rename(expr(c(...)), .data)
+  4. tidyselect:::rename_impl(...)
+  5. tidyselect:::eval_select_impl(...)
+     ...
+ 20. tidyselect:::chr_as_locations(x, vars)
+ 21. vctrs::vec_as_location(x, n = length(vars), names = vars)
+ 22. vctrs `<fn>`()
+ 23. vctrs:::stop_subscript_oob(...)
+ 24. vctrs:::stop_subscript(...)
+ Error in stop_subscript(class = "vctrs_error_subscript_oob", i = i, subscript_type = subscript_type, :".
+ 
+\newpage
+
+### Exercise 18: Do the following with the given data frames. 
+\
+Data Frames:
+```{r include = TRUE}
+df1 <- data.frame(Respondent_ID = c(1000, 1001, 1002, 1003, 1004, 1005, 1006),
+Q1_Response = c(55, 62, 39, 45, 70, 77, 56))
+df1
+
+df2 <- data.frame(Respondent_ID = c(1003, 1002, 1000, 1004, 1006, 1001, 1005),
+Q2_Response = c(12, 17, 23, 24, 19, 30, 20))
+df2
+```
+
+#### a) What happens to the ordering of the rows of df2 when you combine it with df1 using:
+\
+Code: 
+```{r include = TRUE}
+inner_join(x = df1, y = df2, by = "Respondent_ID")
+```
+\
+The ordering will be based on the Respondent ID in df1. 
+\newpage
+
+#### b) How would the result differ if you swapped the roles of df1 and df2, e.g.:
+\
+Code:
+```{r include = TRUE}
+inner_join(x = df2, y = df1, by = "Respondent_ID")
+```
+\
+The code changes so the Respondent ID will be based on df2 instead of df1. 
+
+### Exercise 19: Do the following with the given data frames. 
+\
+Data frames:
+```{r include = TRUE}
+dfX <- data.frame(
+  LastName = c("Smith", "Smith", "Jones", "Smith",
+               "Olsen", "Taylor", "Olsen"),
+  FirstName = c("John", "Kim", "John", "Marge", "Bill",
+                "Bill", "Erin"),
+  Gender = c("M", "F", "M", "F", "M", "M", "F"),
+  ExamScore = c(75, 80, 64, 78, 90, 89, 79)
+)
+dfX
+```
+\newpage
+```{r include = TRUE}
+dfY <- data.frame(
+  LastName = c("Olsen", "Jones", "Taylor", "Smith",
+               "Olsen", "Smith", "Smith"),
+  FirstName = c("Bill", "John", "Bill", "Kim", "Erin",
+                "John", "Marge"),
+  Gender = c("M", "M", "M", "F", "F", "M", "F"),
+  Grade = c("A", "D", "B", "B", "C", "C", "C")
+)
+dfY
+```
+
+#### a) Write a command involving, say, full_join() that combines the two data frames by person. 
+\
+Code:
+```{r include = TRUE}
+full_join(x = dfX, y = dfY, by = c("LastName", "FirstName"))
+```
+\newpage
+
+#### b) What happens with the third variable (Gender) when you only specify the other two (LastName and FirstName) as the key via the by argument? 
+\
+Code:
+```{r include = TRUE}
+full_join(x = dfX, y = dfY, by = c("LastName", "FirstName", "Gender"))
+full_join(x = dfX, y = dfY)
+full_join(x = dfX, y = dfY, by = c("LastName", "FirstName"))
+```
+\newpage
+
+#### c) What would happen if you tried to combine dfX and dfY only specifying LastName as the key variable?
+\
+Code:
+```{r include = TRUE}
+full_join(x = dfX, y = dfY, by = "LastName")
+```

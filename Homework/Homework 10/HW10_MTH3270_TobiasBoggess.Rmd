@@ -1,0 +1,116 @@
+---
+title: "Homework 10"
+author: "Tobias Boggess"
+date: '2022-05-01'
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r include = FALSE}
+library(mdsr)
+library(DBI)
+library(RMySQL)
+library(dplyr)
+library(RSQLite)
+library(dbplyr)
+library(tidyr)
+library(tidyverse)
+```
+
+## Chapter 15 Problems
+
+### Problem 2:  Identify what years of data are available in the flights table of the airlines database.
+
+Code:
+```{r include = TRUE}
+con <- dbConnect_scidb("airlines")
+# con <- dbConnect(drv = MySQL(),
+#                  dbname = "airlines",
+#                  host = "mdsr.cdc7tgkkqd0n.us-east-1.rds.amazonaws.com",
+#                  user = "mdsr_public",
+#                  password = "ImhsmflMDSwR")
+
+dbGetQuery(conn = con,
+           statement = "SELECT year FROM flights
+           GROUP BY year
+           ORDER BY year")
+```
+The years available in the flights data are from 2010 to 2017. 
+\newpage
+
+### Problem 3: Use the dbConnect_scidb function to connect to the airlines database to answer the following problem. How many domestic flights flew into Dallas-Fort Worth (DFW) on May 14, 2010?
+
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = con,
+           statement = "SELECT COUNT(*) AS count FROM flights
+           WHERE dest = 'DFW' AND month = 5 AND day = 14 AND year = 2010;")
+```
+There are 754 flights that flew into Dallas Fort Worth on May 14, 2010. 
+
+### Problem 5: Use the dbConnect_scidb function to connect to the airlines database to answer the following problem. Of all the destinations from Chicago O’Hare (ORD), which were the most common in 2010?
+
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = con,
+           statement = "SELECT dest, origin, COUNT(*) AS count
+           FROM flights
+           WHERE year = 2010 AND origin = 'ORD'
+           GROUP BY dest
+           ORDER BY count DESC
+           LIMIT 0,5;")
+```
+The most popular destination from Chicago O'Hare airport was LGA with 9787 flights.  
+\newpage
+
+### Problem 6: Use the dbConnect_scidb function to connect to the airlines database to answer the following problem. Which airport had the highest average arrival delay time in 2010?
+
+Code:
+```{r include = TRUE}
+dbGetQuery(conn = con,
+           statement = "SELECT dest, AVG(arr_delay) AS avg_arr_delay
+           FROM flights
+           WHERE year = 2010
+           GROUP BY dest
+           ORDER BY avg_arr_delay DESC
+           LIMIT 0,5;")
+```
+GUM airport had the highest average arrival delay time in 2010. 
+
+### Problem 8: Use the dbConnect_scidb function to connect to the airlines database to answer the following problem. List the airline and flight number for all flights between LAX and JFK on September 26th, 1990.
+
+Code:
+```{r include = TRUE}
+# dbGetQuery(conn = con,
+#            statement = "(SELECT carrier, flight 
+#            FROM flights
+#            WHERE origin = 'LAX' AND dest = 'JFK'
+#            AND year = 1990 AND month = 9 AND day = 26)
+#            UNION
+#            (SELECT carrier, flight
+#            FROM flights
+#            WHERE origin = 'JFK' AND dest = 'LAX'
+#            AND year = 1990 AND month = 9 AND day = 26);")
+
+dbGetQuery(conn = con,
+           statement = "SELECT carrier, flight 
+           FROM flights
+           WHERE origin IN ('LAX', 'JFK') AND 
+           dest IN ('LAX', 'JFK') AND year = 1990 AND
+           month = 9 AND day = 26;")
+```
+The above doesn't return any flights because the flights dataset is only available between 2010 and 2017. 
+
+```{r include = FALSE}
+dbDisconnect(conn = con)
+```
+
+
+
+
+
+
+
+
+

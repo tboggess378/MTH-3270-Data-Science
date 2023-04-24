@@ -1,0 +1,172 @@
+---
+title: "Homework 4"
+subtitle: "MTH 3270"
+author: "Tobias Boggess"
+date: "2/23/2022"
+output: pdf_document
+---
+
+## Problems 1-3 from Worksheet
+
+### Question 1: Write commands that do the following.
+
+#### a) Arrived more than two hours late but didn’t leave late. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+library(nycflights13)
+library(dplyr)
+filter(.data = flights, dep_delay <= 0 & arr_delay > 120)
+```
+
+
+
+#### b) Were delayed by at least an hour, but made up over 30 minutes during flight. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+filter(.data = flights, dep_delay > 60 & arr_delay < 30)
+```
+
+### Question 2: Do the following.
+
+#### a) Find the fastest flights (i.e. the ones that spent the least time in the air). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+arrange(.data = flights, air_time)
+```
+\newpage
+
+#### b) Find the longest flights (i.e. the ones that spent the most time in the air). Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+head(arrange(.data = flights, desc(air_time)), 6)
+```
+
+### Question 3: Do the following.
+
+#### a) Use filter() (from the "dplyr" package) to extract a subset of the rows of the nels88 data. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+my.file <- file.choose()
+nels.data <-
+  read.csv(my.file,
+           header = TRUE,
+           sep = " ",
+           stringsAsFactors =  FALSE)
+head(filter(.data = nels.data, heldback == "YES"), 6)
+```
+
+#### b) Use summarize() (from "dplyr") to compute a summary statistic for each of at least three variables in the nels88 data. Report your R command(s).
+\
+Code:
+```{r include = TRUE}
+summarize(.data = nels.data,
+          mean(bymath, na.rm = TRUE),
+          sum(female),
+          min(ses, na.rm = TRUE))
+```
+
+#### c) Use mutate() or transmute() (from "dplyr") to compute at least one new variable from existing variables in the nels88 data. Report your R command(s).
+\
+Code:
+```{r include = TRUE, warning = FALSE}
+mean.func <- function(x, y, z) {
+  if (!is.na(x) & !is.na(y) & !is.na(z)){
+    mean.result <- (x + y + z) / 3
+    mean.result
+  } else if (!is.na(x) & !is.na(y) & is.na(z)) {
+    mean.result <- (x + y) / 2
+    mean.result
+  } else if (!is.na(x) & is.na(y) & is.na(z)) {
+    mean.result <- x
+    mean.result
+  } else {
+    mean.result <- NA
+    mean.result
+  }
+}
+head(mutate(
+  .data = nels.data,
+  math_avg = mean.func(bymath, f1math, f2math),
+  .after = f2math
+),
+6)
+```
+
+## Book Problems
+
+### Question 6: For each task, say which verb it is:
+
+#### a) Find the average of one of the variables
+\
+The function for finding the average of one of the variables is mean().
+
+#### b) Add a new column that is the ratio between two variables.
+\
+The best function to add a new column that is the ratio between two variables could be either mutate() with a parameter that calculates the proportion. 
+
+#### c)  Sort the cases in descending order of a variable
+\
+The function in R to sort the cases based on the descending order of a variable would be desc(). 
+
+#### d) Create a new data table that includes only those cases that meet a criterion.
+\
+A way to create a new data table that includes on the cases wanted would include filter(). 
+
+#### e) From a data table with three categorical variables A, B, and C, and a quantitative variable X, produce a data frame that has the same cases but only the variables A and X.
+\
+The function in R that would keep only the variables A and x would be transmute().
+\newpage
+
+### Question 9: What month had the highest proportion of cancelled flights? What month had the lowest? Interpret any seasonal patterns.
+\
+Code:
+```{r include = TRUE}
+flights %>% group_by(month) %>% summarize(Cancellations = sum(is.na(dep_time))) %>% arrange(desc(Cancellations))
+```
+The month that seems to have the most cancellations is February and the month with the least number of cancellations is November. The least amount of cancellations occur during the holidays like Thanksgiving. More Cancellations tend to occur during Winter and Summer than the Spring or Fall. 
+
+### Question 14: What plane (specified by the tailnum variable) traveled the
+most times from New York City airports in 2013? Plot the number of trips per month over the year.
+\
+Code:
+```{r include = TRUE}
+library(ggplot2)
+flightsByTailNum <-
+  flights %>% group_by(tailnum) %>% summarise(num_flights = n())
+arrange(.data = flightsByTailNum, desc(num_flights))
+
+# tail_num_flights_by_month <- flights %>% group_by(month, tailnum) %>% summarise(numFlightsByMonth = sum(!is.na(tailnum)))
+# arrange(.data = tail_num_flights_by_month, month)
+#
+# monthlyFlights <- tail_num_flights_by_month %>% group_by(month) %>% summarise(numFlights = n())
+# monthlyFlights
+
+flightsByMonth <- transmute(.data = flights, year, month, tailnum)
+flightsByMonth <-
+  flightsByMonth %>% group_by(month) %>% summarize(sumOfFlights = n())
+flightsByMonth
+
+ggplot(data = flightsByMonth, mapping = aes(x = month, y = sumOfFlights)) +
+  geom_line() +
+  ggtitle("Flights per Month in NY for the year 2013") +
+  xlab("Month") + ylab("Number of Flights")
+```
+The plane with the tail number that flown the most out of the New York City airports is N725MQ. 
+
+
+
+
+
+
+
+
+
+
+
+
+

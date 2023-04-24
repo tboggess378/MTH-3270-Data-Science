@@ -1,0 +1,442 @@
+---
+title: "Homework 7"
+author: "Tobias Boggess"
+date: '2022-04-02'
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+```{r include = FALSE, echo = FALSE}
+library(mosaicData)
+library(dplyr)
+library(yardstick)
+library(mdsr)
+library(nasaweather)
+library(rpart)
+library(randomForest)
+library(NHANES)
+library(ggplot2)
+library(kknn)
+library(caTools)
+library(tidyr)
+```
+
+
+## Appendix E Problems
+
+### Problem 5: Investigators in the HELP (Health Evaluation and Linkage to Primary Care) study were interested in modeling predictors of being homeless (one or more nights spent on the street or in a shelter in the past six months vs. housed) using baseline data from the clinical trial. Fit and interpret a parsimonious model that would help the investigators identify predictors of homelessness.
+\
+Code:
+```{r include = TRUE}
+HELPrct <- mutate(HELPrct,
+                  homeless01 = case_when(homeless == "housed" ~ 0,
+                                         homeless == "homeless" ~ 1))
+
+most_var_HELPrct <-
+  glm(
+    homeless01 ~ age + cesd + d1 + drugrisk + e2b + i1 + i2 + indtot + mcs + pcs + pss_fr + sexrisk,
+    data = HELPrct,
+    family = "binomial"
+  )
+
+summary(most_var_HELPrct)
+
+sec_most_HELPrct <-
+  glm(
+    homeless01 ~ age + cesd + d1 + drugrisk + i1 + i2 + indtot + mcs + pcs + pss_fr + sexrisk,
+    data = HELPrct,
+    family = "binomial"
+  )
+
+summary(sec_most_HELPrct)
+
+thrd_most_HELPrct <-
+  glm(homeless01 ~ i1 + indtot + pss_fr,
+      data = HELPrct,
+      family = "binomial")
+
+summary(thrd_most_HELPrct)
+
+fth_most_HELPrct <-
+  glm(homeless01 ~ i1 + pss_fr, data = HELPrct, family = "binomial")
+
+summary(fth_most_HELPrct)
+
+fifth_most_HELPrct <-
+  glm(homeless01 ~ i1 + indtot, data = HELPrct, family = "binomial")
+
+summary(fifth_most_HELPrct)
+
+six_most_HELPrct <-
+  glm(homeless01 ~ pss_fr + indtot, data = HELPrct, family = "binomial")
+
+summary(six_most_HELPrct)
+```
+
+The best of the models seems to be with the explanatory variables i1 (average number of drinks) and indtot (inventory of drug use consequences total score). OVerall, the two variables make sense of why someone would be homeless because the i1 variable takes the average amount of drinks that are consumed by a person in a day. The other variable, indtot, takes into account effects of continued drug usage from an individual questionare that is scored based on several questions applicants answer. While I have not included another variable, pss_fr which is social support from friends, may help in predicting homelessness.  
+
+## Chapter 10 Problems
+
+### Problem 3: Do the following using the HELP data set.
+
+#### a) Generate a confusion matrix for the null model and interpret the result.
+\
+Code:
+```{r include = TRUE}
+my.logreg <- glm(homeless01 ~ 1, data = HELPrct, family = "binomial")
+
+logreg.prob <-
+  predict(my.logreg, newdata = HELPrct, type = "response")
+
+HELPrct <-
+  mutate(HELPrct,
+         predType = case_when(homeless == "housed" ~ 0,
+                              homeless == "homeless" ~ 1))
+
+conf_matrix <- data.frame(Homeless = 0, Housed = 0)
+conf_matrix <- rbind(conf_matrix, table(HELPrct$homeless))
+rownames(conf_matrix) <- c("Predicted Homeless", "Predicted Housed")
+conf_matrix
+# conf_mat(HELPrct, truth = homeless01, estimate = predType)
+```
+
+
+#### b) Fit and interpret logistic regression model for the probability of being homeless as a function of age.
+\
+Code:
+```{r include = TRUE}
+logreg.age <-
+  glm(homeless01 ~ age, data = HELPrct, family = "binomial")
+
+summary(logreg.age)
+```
+For every additional age in years means there is a slightly better chance of being homeless given the model. By this I mean the equation for the probability of being homeless is: P(homeless) = -0.95724 + 0.02248 * *Age*. 
+
+#### c) What is the predicted probability of being homeless for a 20 year old? For a 40 year old?
+\
+Code:
+```{r include = TRUE}
+newHELPrct <- data.frame(age = c(20, 40))
+
+preds <-
+  predict(logreg.age, newdata = newHELPrct, type = "response")
+preds
+```
+The predicted probability of being homeless for the 20 year old is approximately 37.57% and the probability of being homeless for a 40 year old is 48.55%. 
+
+#### d) Generate a confusion matrix for the second model and interpret the result.
+\
+Code:
+```{r include = TRUE}
+probs.age <-
+  predict(logreg.age, newdata = HELPrct, type = "response")
+
+preds.age <- case_when(probs.age < 0.5 ~ "housed",
+                       probs.age >= 0.5 ~ "homeless")
+
+HELPrct <- mutate(HELPrct, predType = preds.age)
+
+conf_mat(data = HELPrct,
+         truth = homeless,
+         estimate = predType)
+```
+Based on the confusion matrix, the number of housed people predicted correctly is 209 while 35 were incorrectly labeled as homeless. The amount of homeless correctly predicted is 48 while 161 homeless were labeled as housed. In other words, the accuracy of the predictions isn't very good for the homeless but decent for the housed population. 
+
+
+## Chapter 11 Problems
+
+### Problem 4: Build a classifier for the type of each storm as a function of its wind speed and pressure. Why would a decision tree make a particularly good classifier for these data? Visualize your classifier in the data space.
+\
+Code:
+```{r include = TRUE}
+storms.tree <- rpart(type ~ wind + pressure,
+                     data = storms,
+                     control = rpart.control(minsplit = 12))
+
+storms.tree
+
+par(xpd = TRUE)
+
+plot(storms.tree, compress = TRUE)
+text(storms.tree, use.n = TRUE)
+par(xpd = FALSE)
+
+storms.pred <- predict(storms.tree, type = "class")
+
+storms <- mutate(storms, predType = storms.pred)
+
+accuracy(data = storms,
+         truth = as.factor(type),
+         estimate = as.factor(predType))
+conf_mat(data = storms,
+         truth = type,
+         estimate = predType)
+```
+
+```{r include = TRUE}
+storms.forest <- randomForest(
+  as.factor(type) ~ wind + pressure,
+  data = storms,
+  ntree = 500,
+  mtry = 2
+)
+
+storms.forest
+
+storms.forest.pred <- predict(storms.forest, type = "class")
+storms <- mutate(storms, predType = storms.forest.pred)
+accuracy(data = storms,
+         truth = as.factor(type),
+         estimate = as.factor(predType))
+conf_mat(data = storms,
+         truth = type,
+         estimate = predType)
+```
+
+A decision tree is the best for this type of problem because it has less misclassification for each type of storm. The decision tree is also less complex than the randomForest. The best part is the accuracy of the predictions is around 85.8% which is a pretty good prediction accuracy probability. 
+
+### Problem 6 (only a and c; decision tree, random forest, and k-NN): Do the following.
+
+#### a) For each of the following models:
+•Build a classifier for SleepTrouble
+•Report its effectiveness on the NHANES training data
+•Make an appropriate visualization of the model
+•Interpret the results. What have you learned about people’s sleeping habits?
+\
+Decision tree code:
+```{r include = TRUE}
+nhanes1 <-
+  select(
+    .data = NHANES,
+    SleepTrouble,
+    Age,
+    Poverty,
+    BMI,
+    BPSysAve,
+    BPDiaAve,
+    TotChol,
+    Weight,
+    Height,
+    Pulse,
+    HomeRooms,
+    SleepHrsNight
+  )
+
+nhanes1 <- na.omit(nhanes1)
+```
+
+```{r include = TRUE}
+nhanes1.tree <-
+  rpart(
+    SleepTrouble ~ Age + Poverty + BMI + Weight + Height,
+    data = nhanes1,
+    control = rpart.control(cp = 0.15)
+  )
+summary(nhanes1.tree)
+
+nhanes1.pred <- predict(nhanes1.tree, type = "class")
+nhanes1.df <- mutate(.data = nhanes1, predType = nhanes1.pred)
+
+tree.conf <-
+  conf_mat(data = nhanes1.df,
+           truth = SleepTrouble,
+           estimate = predType)
+tree.conf
+tree.conf <- data.frame(tree.conf$table)
+tree.conf <- unite(data = tree.conf,
+                    col = "Combo",
+                    c(Prediction, Truth),
+                    sep = " ")
+
+ggplot(data = tree.conf) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes(Format: Prediction Truth)")
+```
+
+\
+Random Forest Code:
+```{r include = TRUE}
+nhanes1.forest <-
+  randomForest(
+    SleepTrouble ~ Age + BMI + Poverty + Pulse + Height + Weight + TotChol,
+    data = nhanes1,
+    ntree = 1000,
+    mtry = 3
+  )
+
+nhanes1.forest
+
+nhanes.pred.forest <- predict(nhanes1.forest, type = "class")
+nhanes2 <- mutate(nhanes1, predType = nhanes.pred.forest)
+
+accuracy(
+  data = nhanes2,
+  truth = as.factor(SleepTrouble),
+  estimate = as.factor(predType)
+)
+
+for.conf.mat <-
+  conf_mat(data = nhanes2,
+           truth = SleepTrouble,
+           estimate = predType)
+for.conf.mat
+for.conf.mat <- data.frame(for.conf.mat$table)
+for.conf.mat <- unite(data = for.conf.mat,
+        col = "Combo",
+        c(Prediction, Truth),
+        sep = " ")
+
+ggplot(data = for.conf.mat) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes(Format: Prediction Truth)")
+```
+
+\
+K-NN Code:
+```{r include = TRUE}
+nhanes1.knn <-
+  kknn(
+    SleepTrouble ~ Age + BMI + Poverty + Pulse + Height + Weight + TotChol,
+    train = nhanes1,
+    test = nhanes1,
+    k = 7
+  )
+
+knn.preds <- fitted(nhanes1.knn)
+nhanes3 <- mutate(nhanes1, predType = knn.preds)
+
+accuracy(
+  data = nhanes3,
+  truth = as.factor(SleepTrouble),
+  estimate = as.factor(predType)
+)
+
+knn.conf_mat <-
+  conf_mat(data = nhanes3,
+           truth = SleepTrouble,
+           estimate = predType)
+knn.conf_mat <- data.frame(knn.conf_mat$table)
+knn.conf_mat <- unite(knn.conf_mat,
+        col = "Combo",
+        c(Prediction, Truth),
+        sep = " ")
+
+ggplot(data = knn.conf_mat) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcome (Format: Predicted Truth)")
+```
+
+
+#### c) Repeat either of the previous exercises, but this time first separate the NHANES data set uniformly at random into 75% training and 25% testing sets. Compare the effectiveness of each model on training vs. testing data.
+\
+Decision Tree:
+```{r include = TRUE}
+nhanes.data = sort(sample(nrow(nhanes1), nrow(nhanes1)*.75))
+nhanes1.train <- nhanes1[nhanes.data,]
+nhanes1.test <- nhanes1[-nhanes.data,]
+
+nhanes2.tree <-
+  rpart(
+    SleepTrouble ~ Age + BMI + Poverty + Pulse + Height + Weight + TotChol,
+    data = nhanes1.train,
+    control = rpart.control(cp = 0.15)
+  )
+
+summary(nhanes2.tree)
+# nhanes2.tree
+tree.preds <- predict(nhanes2.tree, newdata = nhanes1.test, type = "class")
+nhanes2.test <- mutate(nhanes1.test, predType = tree.preds)
+accuracy(data = nhanes2.test, truth = SleepTrouble, estimate = predType)
+
+tree.conf1 <-
+  conf_mat(data = nhanes2.test,
+           truth = SleepTrouble,
+           estimate = predType)
+tree.conf1
+tree.conf1 <- data.frame(tree.conf1$table)
+tree.conf1 <- unite(data = tree.conf1,
+                    col = "Combo",
+                    c(Prediction, Truth),
+                    sep = " ")
+
+ggplot(data = tree.conf1) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes(Format: Prediction Truth)")
+```
+
+\
+Random Forest:
+```{r include = TRUE}
+nhanes2.forest <-
+  randomForest(
+    SleepTrouble ~ Age + BMI + Poverty + Pulse + Height + Weight + TotChol,
+    data = nhanes1.train,
+    ntree = 1000,
+    mtry = 3
+  )
+
+nhanes2.forest
+
+forest.preds <-
+  predict(nhanes2.forest, newdata = nhanes1.test, type = "class")
+nhanes2.test <- mutate(nhanes1.test, predType = forest.preds)
+accuracy(data = nhanes2.test,
+         truth = SleepTrouble,
+         estimate = predType)
+
+for.conf.mat1 <-
+  conf_mat(data = nhanes2.test,
+           truth = SleepTrouble,
+           estimate = predType)
+for.conf.mat1
+for.conf.mat1 <- data.frame(for.conf.mat1$table)
+for.conf.mat1 <- unite(data = for.conf.mat1,
+        col = "Combo",
+        c(Prediction, Truth),
+        sep = " ")
+
+ggplot(data = for.conf.mat1) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes(Format: Prediction Truth)")
+```
+
+\
+K-Nearest Neighbor:
+```{r include = TRUE}
+nhanes3.knn <-
+  kknn(
+    SleepTrouble ~ Age + BMI + Poverty + Pulse + Height + Weight + TotChol,
+    train = nhanes1.train,
+    test = nhanes1.test,
+    k = 7
+  )
+
+knn.preds1 <- fitted(nhanes3.knn)
+nhanes3.test <- mutate(nhanes1.test, predType = knn.preds1)
+
+accuracy(
+  data = nhanes3.test,
+  truth = as.factor(SleepTrouble),
+  estimate = as.factor(predType)
+)
+
+knn.conf_mat1 <-
+  conf_mat(data = nhanes3.test,
+           truth = SleepTrouble,
+           estimate = predType)
+knn.conf_mat1 <- data.frame(knn.conf_mat1$table)
+knn.conf_mat1 <- unite(knn.conf_mat1,
+        col = "Combo",
+        c(Prediction, Truth),
+        sep = " ")
+
+ggplot(data = knn.conf_mat1) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcome (Format: Predicted Truth)")
+```
+The models using a training set of the data seem to be a better representation of the data and gives a better estimate of the different models. 
+
+
+
+
+

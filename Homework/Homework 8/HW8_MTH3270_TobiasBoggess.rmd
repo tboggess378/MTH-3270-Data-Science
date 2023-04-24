@@ -1,0 +1,186 @@
+---
+title: "Homework 8"
+author: "Tobias Boggess"
+date: '2022-04-13'
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r include = FALSE}
+library(NHANES)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rattle)
+library(mclust)
+library(nnet)
+library(yardstick)
+library(caTools)
+library(mdsr)
+library(Lahman)
+```
+
+## Chapter 11 Problems
+
+### Problem 6: Do the following.
+
+#### a) For each of the following models:
+•Build a classifier for SleepTrouble
+•Report its effectiveness on the NHANES training data
+•Make an appropriate visualization of the model
+•Interpret the results. What have you learned about people’s sleeping habits?
+
+``` {r include = TRUE}
+nhanes <-
+  NHANES %>% select(
+    SleepTrouble,
+    Age,
+    HHIncomeMid,
+    Poverty,
+    HomeRooms,
+    Weight,
+    Height,
+    BMI,
+    Pulse:BPDiaAve,
+    DirectChol,
+    TotChol,
+    UrineVol1,
+    SleepHrsNight
+  )
+
+nhanes <- na.omit(nhanes)
+
+nhanes.nn <- nnet(as.factor(SleepTrouble) ~ Age + Poverty + Weight + BMI,
+                  data = nhanes,
+                  size = 9,
+                  maxit = 3000,
+                  trace = FALSE)
+```
+\newpage
+``` {r include = TRUE}
+summary(nhanes.nn)
+
+nhanes.nn.preds <- predict(nhanes.nn)
+nhanes.nn.preds <- case_when(nhanes.nn.preds < 0.2 ~ "No",
+                             nhanes.nn.preds >= 0.2 ~ "Yes")
+nhanes1 <- mutate(.data = nhanes, predType = nhanes.nn.preds)
+
+
+accuracy(
+  data = nhanes1,
+  truth = as.factor(SleepTrouble),
+  estimate = as.factor(predType)
+)
+
+nn.conf_mat <- conf_mat(data = nhanes1, truth = SleepTrouble, estimate = predType)
+nn.conf_mat <- data.frame(nn.conf_mat$table)
+nn.conf_mat <- unite(data = nn.conf_mat, col = "Combo", Prediction, Truth, sep = " ")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = nn.conf_mat) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes (Format: Prediction Truth)")
+```
+The model I was able to create did not have a great accuracy to the model in which age, BMI, and poverty calculations probably aren't the best at predicting the outcomes of whether someone has trouble sleeping or not. 
+
+#### c) Repeat either of the previous exercises, but this time first separate the NHANES data set uniformly at random into 75% training and 25% testing sets. Compare the effectiveness of each model on training vs. testing data
+\
+Code:
+```{r include = TRUE}
+data1 <- sort(sample(nrow(nhanes), nrow(nhanes) * 0.75))
+
+nhanes.train <- nhanes[data1,]
+nhanes.test <- nhanes[-data1,]
+
+nhanes.nn1 <- nnet(SleepTrouble ~ Age + Poverty + Weight + BMI,
+                   data = nhanes.train,
+                   size = 9,
+                   maxit = 3000,
+                   trace = FALSE)
+```
+\newpage
+```{r include = TRUE}
+summary(nhanes.nn1)
+
+nhanes.nn.preds1 <- predict(nhanes.nn1, newdata = nhanes.test)
+nhanes.nn.preds1 <- case_when(nhanes.nn.preds1 < 0.25 ~ "No",
+                             nhanes.nn.preds1 >= 0.25 ~ "Yes")
+nhanes.test <- mutate(.data = nhanes.test, predType = nhanes.nn.preds1)
+
+
+accuracy(
+  data = nhanes.test,
+  truth = as.factor(SleepTrouble),
+  estimate = as.factor(predType)
+)
+
+nn.conf_mat1 <- conf_mat(data = nhanes.test, truth = SleepTrouble, estimate = predType)
+nn.conf_mat1 <- data.frame(nn.conf_mat1$table)
+nn.conf_mat1 <- unite(data = nn.conf_mat1, col = "Combo", Prediction, Truth, sep = " ")
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = nn.conf_mat1) +
+  geom_col(mapping = aes(x = Combo, y = Freq)) +
+  xlab("Outcomes (Format: Prediction Truth)")
+```
+This model does slightly worse than the previous model with the full data set being used to train the model. Also, the variables chosen are the same and allow me to see the effect of using less data points decreases the accuracy of the model. 
+\newpage
+
+## Chapter 12 Problems
+
+### Problem 6 (part a only): Use the kmeans function to perform a cluster analysis on these players. Describe the properties that seem common to each cluster.
+
+Code:
+```{r include = TRUE}
+hof <- Batting %>% group_by(playerID) %>%
+  inner_join(HallOfFame, by = c("playerID" = "playerID")) %>%
+  filter(inducted == "Y" & votedBy == "BBWAA") %>%
+  summarize(
+    tH = sum(H),
+    tHR = sum(HR),
+    tRBI = sum(RBI),
+    tSB = sum(SB)
+  ) %>%
+  filter(tH > 1000)
+
+set.seed(21)
+hof.kclust <- kmeans(select(hof, -playerID), centers = 15)
+hof.kclust
+```
+
+```{r include = TRUE}
+clusters <- hof.kclust$cluster
+pairs(select(hof, -playerID),
+      col = clusters,
+      main = "Scatterplot Matrix of Hall of Famers Data",
+      pch = 19)
+```
+
+The closest thing I can imagine with 15 clusters is the number of votes acquired to get into the hall of fame. Other than that, I have no idea what else would cause the grouping the way they did. 
+\newpage
+
+## Worksheet Problems
+
+### Problem 1: Repeat Problem 6 (part a only) from Ch 12, but now use hclust() (instead of kmeans()) to perform hierarchical clustering.
+\
+Code:
+```{r include = TRUE}
+rownames(hof) <- hof$playerID
+hof_dist <- dist(hof)
+hof_hclust <- hclust(hof_dist)
+plot(hof_hclust, cex = 0.7)
+rect.hclust(hof_hclust, k = 2, border = "red")
+```
+Based on the cluster diagram, I imagine the clusters are used to represent the amount of hits the selected hall of famers' acquired throughout their career. This is just speculation and my best guess, though. 
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,248 @@
+---
+title: "Homework 3"
+subtitle: "MTH 3270"
+author: "Tobias Boggess"
+date: "2/13/2022"
+output: 
+  pdf_document:
+    fig_width: 7
+    fig_height: 6
+classoption: portrait, letter
+---
+# Homework 3
+## Problems on worksheet
+### Problem 1: Answer the questions given below.
+#### a) What’s the default position adjustment according to the help page for geom_boxplot?
+\
+The default position for *geom_boxplot* is *"dodge2"* according to the help page. 
+\newpage
+
+#### b) Visualization of mpg data set using *geom_boxplot*
+\
+Graph:
+```{r include = TRUE}
+library(ggplot2)
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = drv, y = hwy, color = class))
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = mpg) +
+  geom_boxplot(mapping = aes(x = drv, y = cty, color = class))
+```
+\
+Both of the graphs decided were based on the drive type, fuel economy, and the class type. 
+\newpage
+
+### Problem 2: Use the data from the *nels88.txt* file.
+
+#### a) Save the file and read it into *read.csv*
+\
+Code:
+```{r include = TRUE}
+nelsFile <- file.choose()
+nels <- read.csv(nelsFile, header = TRUE, sep = "")
+head(nels)
+str(nels)
+names(nels)
+nrow(nels)
+ncol(nels)
+View(nels)
+is.numeric(nels)
+```
+\
+There are 6,170 rows in the *nels88.txt* data and 19 columns. Additionally, 15 of the columns are numerical and the other four columns are categorical. 
+\
+
+#### b) Number of "complete" rows (i.e., no values showing as NA)
+\
+Code:
+```{r include = TRUE}
+sum(complete.cases(nels))
+```
+\
+There are 2660 rows that are complete.
+\newpage
+
+#### c) Create three different graphs, one of which needs at least three different variables. Show the R commands.
+\
+Code: 
+```{r include = TRUE}
+ggplot(nels) +
+  geom_boxplot(mapping = aes(x = race, y = bymath, color = female)) +
+  labs(title = "1988 Math Standardized Scores by Ethnicity") +
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5))
+```
+\newpage
+```{r include = TRUE}
+ggplot(nels) +
+  geom_point(
+    mapping = aes(
+      x = schtype,
+      y = ses,
+      color = heldback,
+    ),
+    alpha = 0.2,
+    position = "jitter"
+  ) +
+  labs(title = "Socioeconomic status Vs School type") +
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5))
+```
+\newpage
+```{r include = TRUE}
+ggplot(nels) +
+  geom_point(
+    mapping = aes(
+      x = schtype,
+      y = bymath,
+      color = race,
+    ),
+    alpha = 0.2,
+    position = "jitter"
+  ) +
+  labs(title = "1988 Standardized Math Score Vs School type") +
+  theme(axis.text.x = element_text(angle = 65, vjust = 0.5))
+```
+\newpage
+```{r include = TRUE}
+ggplot(nels) +
+  geom_point(mapping = aes(x = heldback, y = bymath), alpha = 0.2, position = "jitter") +
+  labs(title = "1988 Standardized Math Score Vs. Heldback Status")
+```
+\newpage
+
+## Book Problems
+
+### Problem 2: Create a scatterplot between wind and pressure, with color being used to distinguish the type of storm.
+\
+Code:
+```{r include = TRUE}
+library(ggplot2)
+library(nasaweather)
+ggplot(data = storms) +
+  geom_point(
+    mapping = aes(x = wind, y = pressure, color = type),
+    alpha = 0.2
+  )
+```
+\newpage
+
+### Problem 3: Do the following.
+
+#### a) Create an informative and meaningful data graphic
+\
+Code: 
+```{r include = TRUE}
+library(ggplot2)
+library(mosaicData)
+ggplot(data = Dimes) +
+  geom_point(mapping = aes(x = year, y = mass)) +
+  labs(title = "Mass of dimes in grams based on year", 
+       y = "Mass of dimes (in grams)", 
+       x = "Year of the dime"
+       )
+```
+
+#### b)  Identify each of the visual cues that you are using, and describe how they are related to each variable.
+\
+In the graph from *part a*, I used position to demonstrate the weights of the dimes according to year. 
+\newpage
+
+
+#### c)  Create a data graphic with at least five variables (either quantitative or categorical).
+\
+Code: 
+```{r include = TRUE}
+ggplot(data = Gestation) +
+  geom_point(mapping = aes(
+    x = race,
+    y = gestation,
+    color = ed,
+    fill = marital,
+    shape = smoke
+  ))
+```
+\newpage
+
+### Problem 4: Using ggplot2, create a data graphic that displays the average temperature over each 10-minute interval (temperature) as a function of time (when).
+\
+Code:
+```{r include = TRUE}
+library(tidyverse)
+library(macleish)
+glimpse(whately_2015)
+```
+\newpage
+```{r include = TRUE}
+ggplot(data = whately_2015) +
+  geom_point(mapping = aes(x = when, y = temperature))
+```
+\newpage
+
+### Problem 8: Using data from the nasaweather package, use the geom_path function to plot the path of each tropical storm in the storms data table. Use color to distinguish the storms from one another, and use faceting to plot each year in its own panel.
+\
+Code:
+```{r include = TRUE}
+library(nasaweather)
+ggplot(data = storms,
+       mapping = aes(x = long, y = lat, color = name)) +
+  geom_path() +
+  facet_wrap(facets = ~ year) +
+  theme(
+    legend.position = "right",
+    legend.key.height = unit(0.001, 'cm'),
+    legend.key.width = unit(0.001, 'cm'),
+    legend.title = element_text(size = 3),
+    legend.text = element_text(size = 3)
+  ) +
+  guides(col = guide_legend(nrow = 40))
+```
+\newpage
+
+### Problem 9: Do the following with the penguins data set. 
+
+#### a)  What do you observe about the association of bill depth and bill length?
+\
+Code:
+```{r include = TRUE}
+library(palmerpenguins)
+ggplot(
+      data = penguins,
+      mapping = aes(x = bill_depth_mm, y = bill_length_mm, color = species)
+      ) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+\
+As the bill depth increases on each species, the bill length will also increase in size. 
+\newpage
+
+#### b) How would you summarize the association between bill depth and bill length.
+\
+Code: 
+```{r include = TRUE}
+ggplot(data = penguins, mapping = aes(x = bill_depth_mm, y = bill_length_mm, color = species)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(facets = ~ species, scale = "free")
+```
+\
+The relationship between bill depth and bill length seems linear and proportional. As the bill depth increases, the bill length increases. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

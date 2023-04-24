@@ -1,0 +1,280 @@
+---
+title: "Homework 2"
+subtitle: "MTH 3270"
+author: "Tobias Boggess"
+date: "2/7/2022"
+output: pdf_document
+geometry: margin=1in
+---
+## Appendix B Problems
+### Question 1: Do the following
+#### a) Write R commands that create three vectors:
+
+* TrueAndMissing containing values TRUE and NA (at least one of each in any
+order).
+
+* FalseAndMissing containing values FALSE and NA.
+
+* Mixed containing values TRUE, FALSE and NA.
+
+Report your R commands.
+\
+```{r include = TRUE}
+TrueAndMissing <- c(T, T, NA, T, T, NA)
+TrueAndMissing
+FalseAndMissing <- c(F, NA, F, F, NA, F)
+FalseAndMissing
+Mixed <- c(T, F, NA, T, F, T, T, F, NA)
+Mixed
+```
+\newpage
+#### b) Apply the function any() and all() to each of the vectors of part _a_ and report the results.
+\
+Results:
+\
+```{r include = TRUE}
+# using the any() function for the vectors in part a
+any(TrueAndMissing)
+any(FalseAndMissing)
+any(Mixed)
+
+# using the all() function for the vectors in part a
+all(TrueAndMissing)
+all(FalseAndMissing)
+all(Mixed)
+```
+\newpage
+### Question 2: Do the following with the following datasets.
+\
+Datasets:
+\
+```{r include = TRUE}
+# Illiteracy rates per state
+illit <- c(2.1, 1.5, 1.8, 1.9, 1.1, 0.7, 1.1, 0.9, 1.3, 2.0)
+
+# Murder rates per state
+murder <- c(15.1, 11.3, 7.8, 10.1, 10.3, 6.8, 3.1, 6.2, 10.7, 13.9)
+
+# Population per state
+pop <- c(3615, 365, 2212, 2110, 21198, 2541, 3100, 579, 8277, 4931)
+
+# States used for data
+state <- c("Alabama", "Alaska", "Arizona", "Arkansas", "California",
+"Colorado", "Connecticut", "Delaware", "Florida", "Georgia")
+```
+
+#### a) Return the names of the states whose populations are less than 2,500 (thousand)
+\
+Results:
+\
+```{r include = TRUE}
+# Returns the states with a population under 2500
+state[pop < 2500]
+```
+
+#### b) Return illiteracy rates that are greater than the median illiteracy rate
+\
+Results:
+\
+```{r include = TRUE}
+# Returns illiteracy rates greater than the median
+illit[illit > median(illit)]
+```
+
+#### c) Return the murder rates for states whose illiteracy rate is greater than the median illiteracy rate
+\
+Results:
+\
+```{r include = TRUE}
+# Returns the murder rates for states with greater illiteracy rates than the median
+murder[illit > median(illit)]
+```
+
+### Question 3: Do the following with the data set from question 2
+
+#### a) Write a command involving which() that determines the indices of the murder rates that are greater than 12.
+\
+Results:
+\
+```{r include = TRUE}
+# Returns indices of murder rates greater than 12
+which(murder > 12)
+```
+
+
+#### b) Why does the expression "(1:10)[murder > 12]" contain parenthesis
+\
+Results:
+\
+```{r include = TRUE}
+which(murder > 12)
+(1:10)[murder > 12]
+```
+
+The parenthesis tell R how many elements to consider in the murder vector and then it will print all the elements 
+in the vector that meet the requirements.If the term in the parenthesis is 1:5 then it will only consider the
+first 5 elements and if the parameter is 1:12 then it will consider 11 elements even though there are only ten 
+elements in the murder vector.
+
+### Question 4: Guess whether the following will evaluate to TRUE or FALSE
+#### a) (4 > 5 & 8 < 9) | 2 > 3
+\
+My Guess: FALSE
+\
+Results:
+\
+```{r include = TRUE}
+ (4 > 5 & 8 < 9) | 2 > 3
+```
+\newpage
+#### b) 4 > 5 & (8 < 9 | 2 > 3)
+\
+My Guess: FALSE
+\
+Results:
+\
+```{r include = TRUE}
+4 > 5 & (8 < 9 | 2 > 3)
+```
+
+#### c) (4 > 5 & 2 > 3) | 8 < 9 
+\
+My Guess: TRUE
+\
+Results:
+\
+```{r include = TRUE}
+(4 > 5 & 2 > 3) | 8 < 9
+```
+
+#### d) (4 > 5 & (2 > 3 | 8 < 9)) | 7 < 6
+\
+My Guess: FALSE
+\
+Results:
+\
+```{r include = TRUE}
+(4 > 5 & (2 > 3 | 8 < 9)) | 7 < 6
+```
+
+
+### Question 5: Do the following. Explain the results.
+#### a) Values for below.
+\
+Results:
+\
+```{r include = TRUE}
+NA | TRUE
+FALSE & NA
+```
+\
+NA | TRUE will always be true because the or operator and the logical value for TRUE will always
+equate to TRUE. Anything with FALSE and a logical and will equate the expression as FALSE.
+\newpage
+
+#### b) Values for below.\
+
+Results:
+```{r include = TRUE}
+NA | FALSE
+TRUE & NA
+```
+\
+Both of the expressions will report as NA because NA | FALSE is unknown for whether the expression
+will equate TRUE or FALSE. The TRUE & NA expression reports as NA because the expression doesn't know
+the value for NA so the expression cannot equate to either TRUE or FALSE.
+
+
+### Question 6: Write commands to return elements that don't include NA in the given vector.
+\
+Vector:
+\
+```{r include = TRUE}
+x <- c(12, 4, 8, NA, 9, NA, 7, 12, 13, NA, 10)
+
+# Command that displays any values that don't include NA's
+x[!is.na(x)]
+```
+
+
+### Question 7: Write a function for the geometric mean.
+\
+R Code with test cases:
+\
+```{r include = TRUE}
+gm <- function(x) {
+  if(!is.numeric(x) | any(x <= 0) | any(is.na(x))) {
+    stop("Negative or non-numeric values found")
+  }
+  
+  geoMean <- prod(x)^(1/length(x))
+  geoMean
+}
+
+# Test with all positive values
+y <- c(12, 4, 18, 202, 4, 63, 456)
+try(gm(y))
+
+# Test with positive and negative values
+z <- c(45, 57, 67, 1, 20, 45, -56, -48, 12, -75)
+try(gm(z))
+```
+
+```{r include = TRUE}
+# Test with NA values
+f <- c(45, 75, 81, NA, 64, 75, 81, 91, 2, NA, 45, NA)
+try(gm(f))
+```
+
+```{r include = TRUE}
+# Test with a character vector
+g <- c("Bruce", "Amy", "John", "TRUE", "FALSE")
+try(gm(g))
+```
+
+\newpage
+
+## Chapter 2 Problems
+### Question 3: Answer the following about two graphs found on the internet.
+
+Graphs:
+```{r include = FALSE}
+# Graphs from the following websites
+url1 <- "https://hershgupta.com/2021/05/27/dc-crime-rates/cover.png"
+url2 <- "https://www.collegetuitioncompare.com/images/charts/statistics/colorado-public-colleges-undergraduate-program-average-tuition-fees-chart.jpg"
+```
+Graph from https://hershgupta.com/2021/05/27/dc-crime-rates/  
+![](E:/MTH 3270 Data Science/Homework/Homework 2/Crime rate.png) 
+
+Graph from https://www.collegetuitioncompare.com/compare/tables/?state=CO&type=public 
+\
+![](E:/MTH 3270 Data Science/Homework/Homework 2/College rates and fees.png)
+
+* a) What aspects of the display
+work well, and how do these relate to the principles established in this chapter?
+\
+\
+The crime rate for the DC area graph does a good job with showing the direction of the crimes reported and the violent crimes percentage. Another well done thing is the different color patterns used. Furthermore, the graph shows the source and what crimes are included in the data. The scale of the graph is easy to read since the graph has numerical versus linear time scales. Another well done aspect of the graph tells the reader exactly what the data represents from the title, the x-axis, and the y-axis. 
+\
+\
+The graph displaying the data, "average tuition and fees change",  does a good job displaying the area of the bars from different years to clearly demonstrate the differences. Another quality feature is that the actual numbers are included right above each bar. Another great feature of the bar graph is the numerical versus time scales. 
+\
+\
+* b) What aspects of the display don’t work well? Are there ways that the display might be improved?
+\
+\
+The first graph (overall crime graph) would be hard to read if someone was colorblind because of the red and the dark blue. Another possible fix could be to separate the graphs since there's a lot of overlap between the violent crime percentages and the crimes reported. Personally, I would prefer if the violent crimes were the number of violent crimes reported instead of percentages since that would be consistent with the crimes reported. 
+\
+\
+The Colorado college tuition and fee changes graph could change a few features. One of which is the shades of blues of each bar in the graph because they are too similar and the graph would be easier to read if they were different colors other than different shades. Another thing to change would be the legend because it's a little small. It would be nice if it was larger so people who have trouble seeing small text could easily read the information. 
+\
+
+
+
+
+
+
+
+
+
+

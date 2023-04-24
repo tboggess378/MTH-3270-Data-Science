@@ -1,0 +1,243 @@
+---
+title: "Homework 5"
+subtitle: "MTH 3270 Data Science"
+author: "Tobias Boggess"
+date: "3/9/2022"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+## Chapter 5 Worksheet Problems
+
+### Problem 1: Do the following.
+
+Data:
+```{r include = TRUE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+myURL <- "http://sites.msudenver.edu/ngrevsta/wp-content/
+uploads/sites/416/2021/02/houses-for-sale.txt"
+Houses <- read.csv(myURL, header = TRUE, sep = "\t")
+
+Houses_small <- select(Houses, fuel, heat, sewer, construction)
+
+myURL <- "http://sites.msudenver.edu/ngrevsta/wp-content/uploads/
+sites/416/2021/02/house_codes.txt"
+Translations <- read.csv(myURL,
+                         header = TRUE,
+                         stringsAsFactors = FALSE,
+                         sep = "\t")
+
+codes <- Translations %>% pivot_wider(names_from = system_type,
+                                      values_from = meaning,
+                                      values_fill = "invalid")
+```
+
+```{r include = TRUE}
+Houses_small <- left_join(
+  x = Houses_small,
+  y = select(codes, code, fuel_type),
+  by = c(fuel = "code")
+)
+```
+
+#### a) Report R commands that recode the remaining variables (heat, sewer, construction) in Houses_small, then remove the original (integer-valued) variables.
+
+Code:
+```{r include = TRUE}
+Houses_small <-
+  left_join(x = Houses_small,
+            y = select(codes, code, heat_type),
+            by = c(heat = "code"))
+Houses_small <-
+  left_join(x = Houses_small,
+            y = select(codes, code, sewer_type),
+            by = c(sewer = "code"))
+Houses_small <-
+  left_join(x = Houses_small,
+            y = select(codes, code, new_const),
+            by = c(construction = "code"))
+
+head(select(Houses_small, ends_with("type"), new_const))
+```
+
+#### b) Now (using Houses_small obtained in Part a), describe in words what the following command does. Then rewrite it into a more readable version using the pipe operator %>%.
+
+Original code:
+```{r include = TRUE}
+arrange(summarize(group_by(
+  select(filter(Houses_small, new_const == "no"),
+         fuel_type, heat_type), fuel_type
+), count = n()), desc(count))
+```
+\newpage
+Pipe Operator:
+```{r include = TRUE}
+Houses_small %>% filter(new_const == "no") %>% select(fuel_type, heat_type) %>% 
+  group_by(fuel_type) %>% summarize(count = n()) %>% arrange(desc(count))
+```
+
+### Problem 2: Using the flights data set (from the "nycflights13" package), for each destination (dest), determine the total minutes of delay and the average minutes of delay. Report your R command(s).
+
+Code:
+```{r include = TRUE}
+library(nycflights13)
+flights_small <- group_by(select(flights, dest, dep_delay, arr_delay), dest)
+summarise(.data = flights_small, delay_sum = sum(dep_delay, na.rm = TRUE) + sum(arr_delay, na.rm = TRUE), delay_mean = mean(dep_delay, na.rm = TRUE) + mean(arr_delay, na.rm = TRUE))
+```
+
+### Problem 3: Using the flights dataset and answer the following.
+
+#### a) Which variable would be the key for combining the two data frames using one of the *_join() functions?
+\
+The key variable to use when using *_join() is the tailnum variable in the flights data set. 
+\newpage
+
+#### b) Combine the flights and planes data sets using an appropriate *_join() function. Which manufacturer made the most flights in 2013? How many flights did it make?
+
+Code:
+```{r include = TRUE}
+combined_flights <- left_join(x = flights, y = planes, by = 'tailnum')
+#View(combined_flights)
+
+grp_combined_flights <- group_by(.data = combined_flights, manufacturer)
+
+sumgrp_comb_flights <- summarise(grp_combined_flights, count = n())
+arrange(.data = sumgrp_comb_flights, desc(count))
+```
+The manufacturer with the most amount of flights made in 2013 was Boeing and it made 82,912 flights in that year. 
+
+## Chapter 5 Book Problems
+
+### Problem 3 with c: Answer the following questions about the flights dataset
+
+#### a) How many planes have a missing date of manufacture?
+
+Code:
+```{r include = TRUE}
+planes %>% filter(is.na(year)) %>% summarise(count = n())
+```
+There are 70 airplanes that don't have a date of manufacturer. 
+\newpage
+
+#### b) What are the five most common manufacturers?
+
+Code:
+```{r include = TRUE}
+planes %>% group_by(manufacturer) %>% summarise(count = n()) %>% arrange(desc(count))
+
+```
+The five most popular manufacturers are Boeing, Airbus Industrie, Bombardier Incorporation, Airbus, and Embraer.
+
+### Problem 4: Answer the following questions about the flights dataset.
+
+#### a) What is the oldest plane (specified by the tailnum variable) that flew from New York City airports in 2013?
+
+Code:
+```{r include = TRUE}
+combined_flights %>% filter(!is.na(year.y)) %>% summarise(min(year.y))
+```
+* above code uses the combined data between flights and planes data sets from an earlier question *
+\
+The oldest plane to fly out of New York in 2013 was manufactured in 1956. 
+
+#### b)  How many airplanes that flew from New York City are included in the planes table?
+
+Code:
+```{r include = TRUE}
+combined_flights %>% filter(!is.na(manufacturer)) %>% summarise(count = n())
+combined_flights %>% filter(is.na(manufacturer)) %>% summarise(count = n())
+```
+\
+There are a total of 284,170 flights out of New York that are included in the planes data set. 
+
+## Chapter 6 Problems
+
+### Exercise 2: Consider the following pipeline.
+
+Pipeline:
+```{r include = TRUE}
+library(tidyverse)
+mtcars %>%
+  filter(cyl == 4) %>%
+  select(mpg, cyl)
+
+```
+Rewrite this in nested form on a single line. Which set of commands do you prefer and why?
+\newpage
+Non-pipeline version:
+```{r include = TRUE}
+select(filter(mtcars, cyl == 4), mpg, cyl)
+```
+The pipeline version is easier to read so I would choose that version of the code. Another thing I like about the pipeline version is I know what the data set thats being used and the parameters are easier to obtain. 
+
+### Problem 3:  Consider the values returned by the as.numeric() and parse_number() functions when applied to the following vectors. Describe the results and their implication.
+
+Code:
+```{r include = TRUE}
+library(readr) # For parse_number().
+x1 <- c("1900.45", "$1900.45", "1,900.45", "nearly $2000")
+x2 <- as.factor(x1)
+parse_number(x1)
+#parse_number(x2)
+as.numeric(x1)
+as.numeric(x2)
+```
+The function parse_number(x2) produces an error because when x2 factors x1, it will turn each string into a numeric representation of each string. The function parse_number() will parse a number as long as there are no special characters involved such as $, ',', and 'nearly $'. Given the as.numeric() function returns only one of the values for x1 and all the values of x2 shows the above is true. 
+\newpage
+
+### Problem 5: Generate the code to convert the following data frame to wide format.
+
+Code:
+```{r include = TRUE}
+my.data <- data.frame(
+  grp = rep(c("A", "B"), each = 2),
+  sex = rep(c("F", "M"), times = 2),
+  meanL = c(0.22, 0.47, 0.33, 0.55),
+  sdL = c(0.11, 0.33, 0.11, 0.31),
+  meanR = c(0.34, 0.57, 0.40, 0.65),
+  sdR = c(0.09, 0.33, 0.07, 0.27)
+)
+my.data %>% pivot_longer(cols = meanL:sdR) %>% 
+  pivot_wider(names_from = c(sex, name), values_from = value)
+#my.data <- my.data %>% pivot_wider(names_from = name, values_from = value)
+```
+\newpage
+
+### Problem 7: Verify that this code works for this example and generates the correct values of −1, 0, and −2. Describe two problems that might arise if the data set is not sorted in a particular order or if one of the observations is missing for one of the subjects. Provide an alternative approach to generate this variable that is more robust (hint: use pivot_wider).
+
+Code:
+```{r include = TRUE}
+ds1 <- data.frame(
+  id = rep(1:3, times = 2),
+  group = rep(c("T", "C"), each = 3),
+  vals = c(4, 6, 8, 5, 6, 10)
+)
+
+Treat <- filter(ds1, group == "T")
+Control <- filter(ds1, group == "C")
+all <- mutate(Treat, diff = Treat$vals - Control$vals)
+all
+```
+One of the problems with the above code is if it is not sorted, the results from the difference formula would produce the wrong result since filter doesn't account for the id value. Another possible issue with the above code is if one of the observations is missing, the difference result would show an NA value in the data.
+\
+Alternative
+```{r include = TRUE}
+ds1 <- ds1 %>% pivot_wider(names_from = id, values_from = vals)
+ds1
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,196 @@
+---
+title: "Homework 9"
+author: "Tobias Boggess"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+```{r include = FALSE}
+library(ggplot2)
+library(dplyr)
+library(mosaic)
+library(tidyr)
+library(tm)
+library(stringr)
+library(babynames)
+```
+
+## Chapter 13 Problems
+
+### Problem 6: Sally and Joan plan to meet to study in their college campus center. They are both impatient people who will only wait 10 minutes for the other before leaving. Rather than pick a specific time to meet, they agree to head over to the campus center sometime between 7:00 and 8:00 pm. Let both arrival times be normally distributed with mean 30 minutes past and a standard deviation of 10 minutes. Assume that they are independent of each other. What is the probability that they actually meet? Estimate the answer using simulation techniques introduced in this chapter, with at least 10,000 simulations.
+\
+Code:
+```{r include = TRUE}
+set.seed(23)
+sim.cllg_cent <- tibble(
+  Sally = rnorm(n = 10000, mean = 30, sd = 10),
+  Joan = rnorm(n = 10000, mean = 30, sd = 10),
+  results = ifelse(
+    abs(Sally - Joan) <= 10, "Meeting", "No meeting"
+  )
+)
+
+tally(~ results, format = "percent", data = sim.cllg_cent)
+```
+Sally and Joan will only meet approximately 52.29% of the time and will not meet within 47.71% of the time. 
+\newpage
+
+### Problem 9: Generate n = 5,000 observations from a logistic regression model with parameters intercept $\beta_{0}$ = − 1, slope $\beta_{1}$ = 0.5, and distribution of the predictor being normal with mean 1 and standard deviation 1. Calculate and interpret the resulting parameter estimates and confidence intervals.
+\
+Code:
+```{r include = TRUE}
+set.seed(54)
+
+x <- rnorm(n = 5000, mean = 1, sd = 1)
+
+true_probs <- exp(-1 + 0.5 * x) / (1 + exp(-1 + 0.5 * x))
+
+y <- rbinom(n = 5000, size = 1, prob = true_probs)
+
+sim.data <- data.frame(X = x, Y = y)
+
+sim.data.reg <- glm(Y ~ X, data = sim.data)
+
+sim.data.reg
+```
+\newpage
+```{r include = TRUE}
+summary(sim.data.reg)
+```
+The interval for the parameters is: \
+$CI = (0.283848 \pm 2 * 0.009497) + X * (0.108618 \pm 2 * 0.006678)$
+based on the equation given from the summary function above.
+
+
+## Chapter 19 Problems
+
+### Problem 3: Given the vector of words below, determine the output of the following regular expressions without running the R code.
+
+#### str_subset(x, pattern = "pop")                  #1 
+
+##### My Guess: popular, popularity, popularize, popularise, population, repopulate 
+\
+This will look for the substring "pop" in all the words and returns the unique words regardless of capitalization. 
+
+#### str_detect(x, pattern = "^pop")                 #2 
+
+##### My Guess: TRUE TRUE TRUE TRUE FALSE FALSE TRUE FALSE FALSE FALSE FALSE FALSE 
+\
+This command will search for words that contain the substring "pop" exactly as its spelled and true or false. 
+\newpage
+
+#### str_detect(x, pattern = "populari[sz]e")        #3 
+
+##### My Guess: FALSE FALSE TRUE TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE 
+\
+This command will find words that have the pattern as long as they are spelled with an s or z and return true or false if it meets the pattern.  
+
+#### str_detect(x, pattern = "pop.*e")               #4 
+
+##### My Guess: FALSE FALSE TRUE TRUE FALSE FALSE TRUE FALSE FALSE FALSE FALSE FALSE 
+\
+This command looks for the substring "pop" with any other characters as long as it contains an 'e' after the "pop". 
+
+#### str_detect(x, pattern = "p[a-z]*e")             #5 
+
+##### My Guess: FALSE FALSE TRUE TRUE FALSE FALSE TRUE TRUE FALSE TRUE FALSE FALSE 
+\
+This command returns true or false depending on if the word in the string vector contains the beginning letter of p followed by any characters between a and z and ending in e. The string can be of any length. 
+
+#### str_detect(x, pattern = "^[Pp][a-z]+.*n")       #6 
+
+##### My Guess: FALSE FALSE FALSE FALSE FALSE TRUE FALSE FALSE FALSE FALSE FALSE FALSE 
+\
+This command looks for either a capital P or lower case p then characters in the alphabet with any repetition and any length and finally ending in n. 
+
+#### str_subset(x, pattern = "^[^Pp]")               #7 
+
+##### My Guess: repopulate, reproduce, happy family, happier\\tfamily,  happy family 
+\
+This will search for and return any word that doesn't contain P or p at the beginning of the word.
+
+#### str_detect(x, pattern = "^[A-Za-p]")            #8 
+
+##### My Guess: TRUE TRUE TRUE TRUE TRUE TRUE FALSE FALSE TRUE TRUE FALSE TRUE 
+\
+This will return true of false depending on if the word starts with a capital letter or lowercase letter between a and p, respectively. 
+\newpage
+
+#### str_detect(x, pattern = "[ ]")                  #9 
+
+##### My Guess: FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE TRUE FALSE TRUE FALSE 
+\
+This command returns true or false if there is a space in the string. True begin for there is a space and false otherwise. 
+
+#### str_subset(x, pattern = "[\t]")                 #10
+
+##### My Guess: happier\\tfamily 
+\
+This return the string of characters containing a \\t. 
+
+#### str_detect(x, pattern = "[ \t]")                #11 
+
+##### My Guess: FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE TRUE TRUE TRUE FALSE 
+\
+This command return true or false depending if the string contains either a space or a \\t. 
+
+#### str_subset(x, pattern = "^[ ]")                 #12 
+
+##### My Guess: " happy family" 
+\
+This command returns the string if it starts with a space as the first character. 
+
+\newpage
+Code:
+```{r include = TRUE}
+x <- c("popular", "popularity", "popularize", "popularise", "Popular",
+"population", "repopulate", "reproduce", "happy family",
+"happier\tfamily", " happy family", "P6dn")
+x
+
+str_subset(x, pattern = "pop")                  #1
+str_detect(x, pattern = "^pop")                 #2
+str_detect(x, pattern = "populari[sz]e")        #3
+str_detect(x, pattern = "pop.*e")               #4
+str_detect(x, pattern = "p[a-z]*e")             #5
+str_detect(x, pattern = "^[Pp][a-z]+.*n")       #6
+str_subset(x, pattern = "^[^Pp]")               #7
+str_detect(x, pattern = "^[A-Za-p]")            #8
+str_detect(x, pattern = "[ ]")                  #9
+str_subset(x, pattern = "[\t]")                 #10
+str_detect(x, pattern = "[ \t]")                #11
+str_subset(x, pattern = "^[ ]")                 #12
+```
+*Please note: the string, "Population" in the book is replaced by "population" in the worksheet.*
+
+### Problem 4: Use the babynames data table from the babynames package to find the 10 most popular:
+* a) Boys' names ending in a vowel
+* b) Names ending with joe, jo, Joe, or Jo
+
+```{r include = TRUE}
+# Part A
+boysNames <- filter(.data = babynames, sex == "M")
+boysNames <- filter(.data = boysNames, 
+                    name == grep(x = boysNames$name, 
+                                 pattern = "[aeiou]$", 
+                                 value = TRUE))
+head(arrange(.data = boysNames, desc(n)), 10)
+
+# Part B
+endsnames <- filter(.data = babynames, 
+                    name == grep(pattern = "[Jj](oe|o)$", 
+                                 x = babynames$name, 
+                                 value = TRUE))
+head(arrange(.data = endsnames, desc(n)), 10)
+```
+
+
+
+
+
+
+
+
+
+
